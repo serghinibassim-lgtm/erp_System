@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  designation      String
+  category         String
+  unit             String
+  purchaseRefPrice Decimal  @map("purchase_ref_price")
+  saleRefPrice     Decimal  @map("sale_ref_price")
+  initialStock     Int      @map("initial_stock")
+  minStock         Int      @default(0) @map("min_stock")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  purchases    Purchase[]
+  sales        Sale[]
+  stock        Stock?
+  priceHistory PriceHistory[]
+
+  @@map("products")
+}
+
+model Purchase {
+  id              String    @id @default(cuid())
+  date            DateTime
+  documentNumber  String?   @map("document_number")
+  supplierId      String?   @map("supplier_id")
+  productId       String    @map("product_id")
+  quantity        Int
+  unitPrice       Decimal   @map("unit_price")
+  totalAmount     Decimal   @map("total_amount")
+  paymentMethod   String?   @map("payment_method")
+  observation     String?
+  deviation       Decimal?
+  alert           Boolean?
+
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+  product  Product   @relation(fields: [productId], references: [id])
+
+  @@map("purchases")
+}
+
+model Sale {
+  id            String    @id @default(cuid())
+  date          DateTime
+  saleNumber    String?   @map("sale_number")
+  clientId      String?   @map("client_id")
+  productId     String    @map("product_id")
+  quantity      Int
+  unitPrice     Decimal   @map("unit_price")
+  totalAmount   Decimal   @map("total_amount")
+  paymentMethod String?   @map("payment_method")
+  observation   String?
+  deviation     Decimal?
+  alert         Boolean?
+
+  client  Client? @relation(fields: [clientId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("sales")
+}
+
+model Stock {
+  id              String  @id @default(cuid())
+  productId       String  @unique @map("product_id")
+  initialStock    Int     @map("initial_stock")
+  totalPurchases  Int     @default(0) @map("total_purchases")
+  totalSales      Int     @default(0) @map("total_sales")
+  currentStock    Int     @map("current_stock")
+  stockStatus     String  @default("OK") @map("stock_status")
+  costValue       Decimal @map("cost_value")
+  saleValue       Decimal @map("sale_value")
+  potentialMargin Decimal @map("potential_margin")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("stocks")
+}
+
+model Supplier {
+  id      String  @id @default(cuid())
+  code    String  @unique
+  name    String
+  phone   String?
+  address String?
+  ice     String?
+
+  purchases Purchase[]
+
+  @@map("suppliers")
+}
+
+model Client {
+  id      String @id @default(cuid())
+  code    String @unique
+  name    String
+  phone   String?
+  address String?
+
+  sales Sale[]
+
+  @@map("clients")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("USER")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Parameter {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@map("parameters")
+}
+
+model PriceHistory {
+  id               String    @id @default(cuid())
+  productId        String    @map("product_id")
+  oldPurchasePrice Decimal?  @map("old_purchase_price")
+  newPurchasePrice Decimal?  @map("new_purchase_price")
+  oldSalePrice     Decimal?  @map("old_sale_price")
+  newSalePrice     Decimal?  @map("new_sale_price")
+  changedAt        DateTime  @default(now()) @map("changed_at")
+  reason           String?
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("price_histories")
+}
