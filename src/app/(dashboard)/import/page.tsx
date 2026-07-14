@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function ImportPage() {
@@ -49,13 +47,21 @@ export default function ImportPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Fichier source</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+      <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+        <div className="flex flex-col gap-1 px-4 pt-4">
+          <h2 className="text-lg font-semibold leading-snug">Fichier source</h2>
+        </div>
+        <div className="space-y-4 px-4 pb-4">
           <p className="text-sm text-muted-foreground">
-            Le fichier doit contenir une feuille <strong>PRODUITS</strong> avec les colonnes :
-            Code produit, Produit, Stock initial, Prix achat source, Prix vente source.
-            Les feuilles <strong>VENTES</strong> et <strong>ACHATS</strong> sont optionnelles.
+            Le fichier doit contenir une feuille <strong>PRODUITS</strong>. Les colonnes sont détectées
+            automatiquement par leur nom. Formats supportés :
+          </p>
+          <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1">
+            <li><strong>Code produit</strong>, <strong>Désignation</strong>, Stock initial, Prix achat, Prix vente (obligatoires)</li>
+            <li><strong>Catégorie</strong>, <strong>Unité</strong>, Stock minimum (optionnelles)</li>
+          </ul>
+          <p className="text-xs text-muted-foreground mt-2">
+            La feuille <strong>VENTES</strong> est optionnelle (import des ventes historiques).
           </p>
 
           <div
@@ -83,30 +89,30 @@ export default function ImportPage() {
             />
           </div>
 
-          <Button
-            className="w-full gap-2"
+          <button
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
             onClick={handleSubmit}
             disabled={!file || loading}
           >
             <Upload className="h-4 w-4" />
             {loading ? "Import en cours..." : "Lancer l'import"}
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </div>
+      </div>
 
       {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h2 className="flex items-center gap-2 text-lg font-semibold leading-snug">
               {result.success ? (
                 <CheckCircle className="h-5 w-5 text-green-600" />
               ) : (
                 <AlertCircle className="h-5 w-5 text-red-600" />
               )}
               Résultat
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+            </h2>
+          </div>
+          <div className="space-y-2 px-4 pb-4 text-sm">
             <p>{result.message}</p>
             {result.results && (
               <ul className="list-inside list-disc space-y-1 text-muted-foreground">
@@ -122,8 +128,8 @@ export default function ImportPage() {
                 )}
               </ul>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

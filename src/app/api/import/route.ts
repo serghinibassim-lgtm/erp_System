@@ -1,6 +1,33 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+const HEADER_ALIASES: Record<string, string[]> = {
+  code: ["code produit", "code"],
+  designation: ["désignation", "designation", "produit"],
+  category: ["catégorie", "categorie", "categorie"],
+  unit: ["unité de mesure", "unité", "unite", "unite de mesure"],
+  purchasePrice: ["prix achat référence", "prix achat source", "prix achat ref", "prix achat"],
+  salePrice: ["prix vente référence", "prix vente source", "prix vente ref", "prix vente"],
+  stock: ["stock initial", "stock"],
+  minStock: ["stock minimum", "stock min"],
+};
+
+function findColumn(header: string[], aliases: string[]): number {
+  const lower = header.map(h => String(h).toLowerCase().trim());
+  for (const alias of aliases) {
+    const idx = lower.indexOf(alias.toLowerCase());
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function parseNumber(val: unknown): number {
+  if (val == null || val === "") return 0;
+  const str = String(val).trim().replace(",", ".");
+  const n = parseFloat(str);
+  return isNaN(n) ? 0 : n;
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -24,18 +51,40 @@ export async function POST(request: Request) {
 
     // --- Import PRODUITS ---
     if (wb.SheetNames.includes("PRODUITS")) {
-      const sheet = xlsx.utils.sheet_to_json(wb.Sheets["PRODUITS"], { header: 1, defval: "" }) as string[][];
+      const sheet = xlsx.utils.sheet_to_json(wb.Sheets["PRODUITS"], { header: 1, defval: "" }) as unknown[][];
+      const header = (sheet[0] || []).map(h => String(h).trim());
+      const col = {
+        code: findColumn(header, HEADER_ALIASES.code),
+        designation: findColumn(header, HEADER_ALIASES.designation),
+        category: findColumn(header, HEADER_ALIASES.category),
+        unit: findColumn(header, HEADER_ALIASES.unit),
+        purchasePrice: findColumn(header, HEADER_ALIASES.purchasePrice),
+        salePrice: findColumn(header, HEADER_ALIASES.salePrice),
+        stock: findColumn(header, HEADER_ALIASES.stock),
+        minStock: findColumn(header, HEADER_ALIASES.minStock),
+      };
+
+      if (col.code === -1 || col.designation === -1) {
+        return NextResponse.json({
+          success: false,
+          message: "Colonnes 'Code produit' et 'Désignation' introuvables dans la feuille PRODUITS",
+          results,
+        });
+      }
+
       for (let i = 1; i < sheet.length; i++) {
         const row = sheet[i];
-        const code = String(row[0] || "").trim();
-        const designation = String(row[1] || "").trim();
-        const stockStr = String(row[2] || "0").trim();
-        const purchasePrice = parseFloat(String(row[3] || "0").replace(",", "."));
-        const salePrice = parseFloat(String(row[4] || "0").replace(",", "."));
+        const code = String(row[col.code] || "").trim();
+        const designation = String(row[col.designation] || "").trim();
 
         if (!code || !designation) continue;
 
-        const initialStock = parseInt(stockStr) || 0;
+        const category = col.category !== -1 ? String(row[col.category] || "").trim() : "Général";
+        const unit = col.unit !== -1 ? String(row[col.unit] || "").trim() : "pièce";
+        const initialStock = col.stock !== -1 ? parseInt(String(row[col.stock] || "0")) || 0 : 0;
+        const minStock = col.minStock !== -1 ? parseInt(String(row[col.minStock] || "0")) || 0 : 0;
+        const purchasePrice = col.purchasePrice !== -1 ? parseNumber(row[col.purchasePrice]) : 0;
+        const salePrice = col.salePrice !== -1 ? parseNumber(row[col.salePrice]) : 0;
 
         try {
           const existing = await prisma.product.findUnique({ where: { code } });
@@ -44,9 +93,12 @@ export async function POST(request: Request) {
               where: { code },
               data: {
                 designation,
+                category: category || existing.category,
+                unit: unit || existing.unit,
                 purchaseRefPrice: purchasePrice || existing.purchaseRefPrice,
                 saleRefPrice: salePrice || existing.saleRefPrice,
                 initialStock: initialStock || existing.initialStock,
+                minStock: minStock || existing.minStock,
               },
             });
           } else {
@@ -54,12 +106,12 @@ export async function POST(request: Request) {
               data: {
                 code,
                 designation,
-                category: "Général",
-                unit: "pièce",
+                category: category || "Général",
+                unit: unit || "pièce",
                 purchaseRefPrice: purchasePrice || 0,
                 saleRefPrice: salePrice || 0,
                 initialStock,
-                minStock: 0,
+                minStock,
               },
             });
           }
@@ -68,15 +120,29 @@ export async function POST(request: Request) {
           if (p) {
             const stock = await prisma.stock.findUnique({ where: { productId: p.id } });
             if (!stock) {
+              const currentStock = initialStock;
               await prisma.stock.create({
                 data: {
                   productId: p.id,
                   initialStock,
-                  currentStock: initialStock,
-                  stockStatus: initialStock <= 0 ? "Alerte" : "OK",
-                  costValue: purchasePrice * initialStock,
-                  saleValue: salePrice * initialStock,
-                  potentialMargin: (salePrice - purchasePrice) * initialStock,
+                  currentStock,
+                  stockStatus: currentStock <= minStock ? "Alerte" : "OK",
+                  costValue: Number(p.purchaseRefPrice) * currentStock,
+                  saleValue: Number(p.saleRefPrice) * currentStock,
+                  potentialMargin: (Number(p.saleRefPrice) - Number(p.purchaseRefPrice)) * currentStock,
+                },
+              });
+            } else {
+              const currentStock = stock.initialStock + stock.totalPurchases - stock.totalSales + initialStock - stock.initialStock;
+              await prisma.stock.update({
+                where: { productId: p.id },
+                data: {
+                  initialStock,
+                  currentStock,
+                  stockStatus: currentStock <= minStock ? "Alerte" : "OK",
+                  costValue: Number(p.purchaseRefPrice) * currentStock,
+                  saleValue: Number(p.saleRefPrice) * currentStock,
+                  potentialMargin: (Number(p.saleRefPrice) - Number(p.purchaseRefPrice)) * currentStock,
                 },
               });
             }
@@ -89,14 +155,23 @@ export async function POST(request: Request) {
       }
     }
 
-    // --- Import VENTES from PRODUITS (historic sales) ---
+    // --- Import VENTES ---
     if (wb.SheetNames.includes("VENTES")) {
-      const sheet = xlsx.utils.sheet_to_json(wb.Sheets["VENTES"], { header: 1, defval: "" }) as string[][];
+      const sheet = xlsx.utils.sheet_to_json(wb.Sheets["VENTES"], { header: 1, defval: "" }) as unknown[][];
+      const header = (sheet[0] || []).map(h => String(h).trim());
+      const colCode = findColumn(header, HEADER_ALIASES.code);
+      const colQty = header.findIndex(h => /quantité|quantite|qté|qte|quantite/i.test(h));
+      const colPrice = header.findIndex(h => /prix.*vente|prix/i.test(h));
+
+      const codeIdx = colCode !== -1 ? colCode : 2;
+      const qtyIdx = colQty !== -1 ? colQty : 5;
+      const priceIdx = colPrice !== -1 ? colPrice : 6;
+
       for (let i = 1; i < sheet.length; i++) {
         const row = sheet[i];
-        const code = String(row[2] || "").trim();
-        const qty = parseInt(String(row[5] || "0"));
-        const price = parseFloat(String(row[6] || "0").replace(",", "."));
+        const code = String(row[codeIdx] || "").trim();
+        const qty = parseInt(String(row[qtyIdx] || "0"));
+        const price = parseNumber(row[priceIdx]);
 
         if (!code || qty <= 0) continue;
 
@@ -123,7 +198,6 @@ export async function POST(request: Request) {
             },
           });
 
-          // Update stock
           const stock = await prisma.stock.findUnique({ where: { productId: product.id } });
           if (stock) {
             const newTotalSales = stock.totalSales + qty;

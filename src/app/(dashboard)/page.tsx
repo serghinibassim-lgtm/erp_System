@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Package, AlertTriangle, TrendingUp, DollarSign,
   ShoppingCart, Users,
@@ -74,23 +73,25 @@ export default function DashboardPage() {
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <Card key={card.title}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-medium md:text-sm">{card.title}</CardTitle>
-                <Icon className={`h-5 w-5 ${card.color}`} />
-              </CardHeader>
-              <CardContent>
+            <div key={card.title} className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+              <div className="flex flex-row items-center justify-between gap-1 px-4 pt-4 pb-2">
+                <h3 className="text-xs font-medium md:text-sm">{card.title}</h3>
+                <Icon className={`h-6 w-6 ${card.color}`} />
+              </div>
+              <div className="px-4 pb-4">
                 <p className="text-lg font-bold md:text-2xl">{card.value}</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Top 5 produits (valeur stock)</CardTitle></CardHeader>
-          <CardContent>
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h3 className="text-lg font-semibold leading-snug">Top 5 produits (valeur stock)</h3>
+          </div>
+          <div className="px-4 pb-4">
             {barData.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune donnée</p>
             ) : (
@@ -103,12 +104,14 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader><CardTitle>État des stocks</CardTitle></CardHeader>
-          <CardContent>
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h3 className="text-lg font-semibold leading-snug">État des stocks</h3>
+          </div>
+          <div className="px-4 pb-4">
             {pieData[0].value === 0 && pieData[1].value === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune donnée</p>
             ) : (
@@ -131,14 +134,16 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Derniers achats</CardTitle></CardHeader>
-          <CardContent>
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h3 className="text-lg font-semibold leading-snug">Derniers achats</h3>
+          </div>
+          <div className="px-4 pb-4">
             {data.recentPurchases.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucun achat récent</p>
             ) : (
@@ -156,12 +161,14 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader><CardTitle>Dernières ventes</CardTitle></CardHeader>
-          <CardContent>
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h3 className="text-lg font-semibold leading-snug">Dernières ventes</h3>
+          </div>
+          <div className="px-4 pb-4">
             {data.recentSales.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune vente récente</p>
             ) : (
@@ -179,8 +186,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

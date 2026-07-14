@@ -2,10 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 interface Purchase {
   id: string;
@@ -49,65 +45,67 @@ export default function PurchasesPage() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Achats</h1>
           <p className="text-sm text-muted-foreground md:text-base">Historique des achats et approvisionnements</p>
         </div>
-        <Link href="/purchases/new">
-          <Button className="w-full sm:w-auto">Nouvel achat</Button>
+        <Link href="/purchases/new" className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">
+          Nouvel achat
         </Link>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Input
+        <input
           placeholder="Rechercher par produit..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:max-w-sm"
+          className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-sm"
         />
       </div>
 
       <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Document</TableHead>
-              <TableHead>Produit</TableHead>
-              <TableHead>Fournisseur</TableHead>
-              <TableHead>Qté</TableHead>
-              <TableHead>Prix unit.</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Alerte</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  Chargement...
-                </TableCell>
-              </TableRow>
-            ) : purchases.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  Aucun achat trouvé
-                </TableCell>
-              </TableRow>
-            ) : (
-              purchases.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>{new Date(p.date).toLocaleDateString("fr-FR")}</TableCell>
-                  <TableCell>{p.documentNumber || "-"}</TableCell>
-                  <TableCell>{p.product.code} - {p.product.designation}</TableCell>
-                  <TableCell>{p.supplier?.name || "-"}</TableCell>
-                  <TableCell>{p.quantity}</TableCell>
-                  <TableCell>{Number(p.unitPrice).toFixed(2)}</TableCell>
-                  <TableCell>{Number(p.totalAmount).toFixed(2)}</TableCell>
-                  <TableCell>
-                    {p.alert ? <Badge variant="destructive">Alerte</Badge> : <Badge variant="secondary">OK</Badge>}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <div className="relative w-full overflow-x-auto">
+          <table className="w-full caption-bottom text-base border-collapse">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Date</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Document</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Produit</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Fournisseur</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Qté</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Prix unit.</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Total</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Alerte</th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {loading ? (
+                <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                  <td colSpan={8} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
+                    Chargement...
+                  </td>
+                </tr>
+              ) : purchases.length === 0 ? (
+                <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                  <td colSpan={8} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
+                    Aucun achat trouvé
+                  </td>
+                </tr>
+              ) : (
+                purchases.map((p) => (
+                  <tr key={p.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                    <td className="p-3 align-middle whitespace-nowrap">{new Date(p.date).toLocaleDateString("fr-FR")}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">{p.documentNumber || "-"}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">{p.product.code} - {p.product.designation}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">{p.supplier?.name || "-"}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">{p.quantity}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">{Number(p.unitPrice).toFixed(2)}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">{Number(p.totalAmount).toFixed(2)}</td>
+                    <td className="p-3 align-middle whitespace-nowrap">
+                      {p.alert ? <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-destructive/10 text-destructive">Alerte</span> : <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-secondary text-secondary-foreground">OK</span>}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

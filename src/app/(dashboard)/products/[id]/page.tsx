@@ -2,12 +2,6 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface PriceHistory {
   id: string;
@@ -59,6 +53,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [units, setUnits] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/parameters")
+      .then(r => r.json())
+      .then(data => {
+        if (data.parameters) {
+          const cats = data.parameters.find((p: {key: string}) => p.key === "categories");
+          const uns = data.parameters.find((p: {key: string}) => p.key === "units");
+          if (cats?.value) setCategories(cats.value.split("\n").filter((s: string) => s.trim()));
+          if (uns?.value) setUnits(uns.value.split("\n").filter((s: string) => s.trim()));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchProduct = useCallback(async () => {
     setLoading(true);
@@ -87,7 +97,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => { fetchProduct(); }, [fetchProduct]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setFieldErrors({});
   };
@@ -142,7 +152,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="space-y-4">
         <p className="text-red-600">{error}</p>
-        <Button variant="outline" onClick={() => router.push("/products")}>Retour</Button>
+        <button
+          className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+          onClick={() => router.push("/products")}
+        >
+          Retour
+        </button>
       </div>
     );
   }
@@ -163,36 +178,98 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <div className="flex flex-wrap gap-2">
           {!editing ? (
-            <Button onClick={() => setEditing(true)}>Modifier</Button>
+            <button
+              className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+              onClick={() => setEditing(true)}
+            >
+              Modifier
+            </button>
           ) : (
             <>
-              <Button onClick={handleSave} disabled={saving}>
+              <button
+                className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={handleSave}
+                disabled={saving}
+              >
                 {saving ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-              <Button variant="outline" onClick={() => { setEditing(false); fetchProduct(); }}>
+              </button>
+              <button
+                className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={() => { setEditing(false); fetchProduct(); }}
+              >
                 Annuler
-              </Button>
+              </button>
             </>
           )}
-          <Button variant="outline" onClick={() => router.push("/products")}>Retour</Button>
+          <button
+            className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+            onClick={() => router.push("/products")}
+          >
+            Retour
+          </button>
         </div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Informations</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h3 className="text-lg font-semibold leading-snug">Informations</h3>
+          </div>
+          <div className="px-4 pb-4 space-y-4">
             {editing ? (
               <>
-                {(["code", "designation", "category", "unit"] as const).map((field) => (
-                  <div key={field} className="space-y-1">
-                    <Label>{field === "code" ? "Code" : field === "designation" ? "Désignation" : field === "category" ? "Catégorie" : "Unité"}</Label>
-                    <Input name={field} value={form[field]} onChange={handleChange} className={fieldErrors[field] ? "border-red-500" : ""} />
-                    {fieldErrors[field] && <p className="text-sm text-red-500">{fieldErrors[field]}</p>}
-                  </div>
-                ))}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Code <span className="text-destructive">*</span></label>
+                  <input
+                    name="code"
+                    value={form.code}
+                    onChange={handleChange}
+                    className={`h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.code ? "border-red-500" : ""}`}
+                  />
+                  {fieldErrors.code && <p className="text-sm text-red-500">{fieldErrors.code}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Désignation <span className="text-destructive">*</span></label>
+                  <input
+                    name="designation"
+                    value={form.designation}
+                    onChange={handleChange}
+                    className={`h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.designation ? "border-red-500" : ""}`}
+                  />
+                  {fieldErrors.designation && <p className="text-sm text-red-500">{fieldErrors.designation}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Catégorie <span className="text-destructive">*</span></label>
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.category ? "border-red-500" : "border-input"}`}
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  {fieldErrors.category && <p className="text-sm text-red-500">{fieldErrors.category}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Unité <span className="text-destructive">*</span></label>
+                  <select
+                    name="unit"
+                    value={form.unit}
+                    onChange={handleChange}
+                    className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.unit ? "border-red-500" : "border-input"}`}
+                  >
+                    <option value="">Sélectionner une unité</option>
+                    {units.map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                  {fieldErrors.unit && <p className="text-sm text-red-500">{fieldErrors.unit}</p>}
+                </div>
               </>
             ) : (
               <dl className="space-y-2 text-sm">
@@ -202,25 +279,43 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex justify-between"><dt className="text-muted-foreground">Unité</dt><dd className="font-medium">{product.unit}</dd></div>
               </dl>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader><CardTitle>Prix et Stock</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
+        <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+          <div className="flex flex-col gap-1 px-4 pt-4">
+            <h3 className="text-lg font-semibold leading-snug">Prix et Stock</h3>
+          </div>
+          <div className="px-4 pb-4 space-y-4">
             {editing ? (
               <>
                 {(["purchaseRefPrice", "saleRefPrice", "initialStock", "minStock"] as const).map((field) => (
                   <div key={field} className="space-y-1">
-                    <Label>{field === "purchaseRefPrice" ? "Prix achat" : field === "saleRefPrice" ? "Prix vente" : field === "initialStock" ? "Stock initial" : "Stock minimum"}</Label>
-                    <Input name={field} type="number" step={field.includes("Price") ? "0.01" : "1"} value={form[field]} onChange={handleChange} className={fieldErrors[field] ? "border-red-500" : ""} />
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      {field === "purchaseRefPrice" ? "Prix achat" : field === "saleRefPrice" ? "Prix vente" : field === "initialStock" ? "Stock initial" : "Stock minimum"}
+                      {field !== "minStock" && <span className="text-destructive"> *</span>}
+                    </label>
+                    <input
+                      name={field}
+                      type="number"
+                      step={field.includes("Price") ? "0.01" : "1"}
+                      value={form[field]}
+                      onChange={handleChange}
+                      className={`h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors[field] ? "border-red-500" : ""}`}
+                    />
                     {fieldErrors[field] && <p className="text-sm text-red-500">{fieldErrors[field]}</p>}
                   </div>
                 ))}
                 {form.priceReason && (
                   <div className="space-y-1">
-                    <Label>Raison du changement de prix</Label>
-                    <Input name="priceReason" value={form.priceReason} onChange={handleChange} placeholder="Optionnel" />
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Raison du changement de prix</label>
+                    <input
+                      name="priceReason"
+                      value={form.priceReason}
+                      onChange={handleChange}
+                      placeholder="Optionnel"
+                      className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                    />
                   </div>
                 )}
               </>
@@ -234,13 +329,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex justify-between"><dt className="text-muted-foreground">Stock minimum</dt><dd className="font-medium">{product.minStock}</dd></div>
               </dl>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Stock actuel</CardTitle></CardHeader>
-        <CardContent>
+      <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+        <div className="flex flex-col gap-1 px-4 pt-4">
+          <h3 className="text-lg font-semibold leading-snug">Stock actuel</h3>
+        </div>
+        <div className="px-4 pb-4">
           {product.stock ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               <div>
@@ -249,9 +346,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Statut</p>
-                <Badge variant={product.stock.stockStatus === "Alerte" ? "destructive" : "secondary"}>
+                <span className={`inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap ${product.stock.stockStatus === "Alerte" ? "bg-destructive/10 text-destructive" : "bg-secondary text-secondary-foreground"}`}>
                   {product.stock.stockStatus}
-                </Badge>
+                </span>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Valeur au coût</p>
@@ -265,44 +362,46 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           ) : (
             <p className="text-muted-foreground">Aucune donnée de stock</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader><CardTitle>Historique des prix</CardTitle></CardHeader>
-        <CardContent>
+      <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+        <div className="flex flex-col gap-1 px-4 pt-4">
+          <h3 className="text-lg font-semibold leading-snug">Historique des prix</h3>
+        </div>
+        <div className="px-4 pb-4">
           {product.priceHistory.length === 0 ? (
             <p className="text-muted-foreground">Aucun changement de prix enregistré</p>
           ) : (
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Ancien prix achat</TableHead>
-                  <TableHead>Nouveau prix achat</TableHead>
-                  <TableHead>Ancien prix vente</TableHead>
-                  <TableHead>Nouveau prix vente</TableHead>
-                  <TableHead>Raison</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {product.priceHistory.map((h) => (
-                  <TableRow key={h.id}>
-                    <TableCell>{new Date(h.changedAt).toLocaleDateString("fr-FR")}</TableCell>
-                    <TableCell>{h.oldPurchasePrice != null ? Number(h.oldPurchasePrice).toFixed(2) : "-"}</TableCell>
-                    <TableCell>{h.newPurchasePrice != null ? Number(h.newPurchasePrice).toFixed(2) : "-"}</TableCell>
-                    <TableCell>{h.oldSalePrice != null ? Number(h.oldSalePrice).toFixed(2) : "-"}</TableCell>
-                    <TableCell>{h.newSalePrice != null ? Number(h.newSalePrice).toFixed(2) : "-"}</TableCell>
-                    <TableCell>{h.reason || "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="relative w-full overflow-x-auto">
+              <table className="w-full caption-bottom text-base border-collapse">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                    <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Date</th>
+                    <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Ancien prix achat</th>
+                    <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Nouveau prix achat</th>
+                    <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Ancien prix vente</th>
+                    <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Nouveau prix vente</th>
+                    <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Raison</th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
+                  {product.priceHistory.map((h) => (
+                    <tr key={h.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{new Date(h.changedAt).toLocaleDateString("fr-FR")}</td>
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{h.oldPurchasePrice != null ? Number(h.oldPurchasePrice).toFixed(2) : "-"}</td>
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{h.newPurchasePrice != null ? Number(h.newPurchasePrice).toFixed(2) : "-"}</td>
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{h.oldSalePrice != null ? Number(h.oldSalePrice).toFixed(2) : "-"}</td>
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{h.newSalePrice != null ? Number(h.newSalePrice).toFixed(2) : "-"}</td>
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{h.reason || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

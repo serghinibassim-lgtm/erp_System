@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Package, ShoppingCart, TrendingUp,
   ClipboardList, Building2, Users, Settings, Upload, LogOut, Menu, X,
@@ -61,12 +59,11 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isActive(item.href)
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
+              }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
@@ -85,10 +82,10 @@ export default function Sidebar() {
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="mt-2 w-full justify-start gap-2 text-muted-foreground" onClick={handleLogout}>
+        <button onClick={handleLogout} className="mt-2 inline-flex w-full items-center gap-2 rounded-lg px-3 h-8 text-sm font-medium whitespace-nowrap transition-all hover:bg-muted hover:text-foreground text-muted-foreground disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4">
           <LogOut className="h-4 w-4 shrink-0" />
           Déconnexion
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -111,10 +108,9 @@ export default function Sidebar() {
       )}
 
       <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 border-r bg-card transition-transform md:static md:z-0 md:block md:translate-x-0",
+        className={`fixed inset-y-0 left-0 z-40 w-64 border-r bg-card transition-transform md:static md:z-0 md:block md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
-        )}
+        }`}
       >
         <button
           onClick={() => setOpen(false)}

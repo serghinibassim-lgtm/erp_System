@@ -1,10 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
 
 interface StockItem {
@@ -61,10 +57,13 @@ export default function StockPage() {
           <p className="text-sm text-muted-foreground md:text-base">État des stocks et alertes</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => window.open("/api/export/stock")}>
+          <button
+            className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 gap-2"
+            onClick={() => window.open("/api/export/stock")}
+          >
             <Download className="h-4 w-4" />
             Exporter CSV
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -94,63 +93,63 @@ export default function StockPage() {
       )}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Input
+        <input
           placeholder="Rechercher par produit..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:max-w-sm"
+          className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-sm"
         />
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Produit</TableHead>
-              <TableHead>Stock initial</TableHead>
-              <TableHead>Achats</TableHead>
-              <TableHead>Ventes</TableHead>
-              <TableHead>Stock actuel</TableHead>
-              <TableHead>Seuil min</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Coût</TableHead>
-              <TableHead>Marge potentielle</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="relative w-full overflow-x-auto rounded-md border">
+        <table className="w-full caption-bottom text-base border-collapse">
+          <thead className="[&_tr]:border-b">
+            <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Produit</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Stock initial</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Achats</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Ventes</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Stock actuel</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Seuil min</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Statut</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Coût</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Marge potentielle</th>
+            </tr>
+          </thead>
+          <tbody className="[&_tr:last-child]:border-0">
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+              <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                <td colSpan={9} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">
                   Chargement...
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : stocks.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+              <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                <td colSpan={9} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">
                   Aucun stock trouvé
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               stocks.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.product.code} - {s.product.designation}</TableCell>
-                  <TableCell>{s.initialStock}</TableCell>
-                  <TableCell>{s.totalPurchases}</TableCell>
-                  <TableCell>{s.totalSales}</TableCell>
-                  <TableCell className="font-bold">{s.currentStock}</TableCell>
-                  <TableCell>{s.product.minStock}</TableCell>
-                  <TableCell>
-                    <Badge variant={s.stockStatus === "Alerte" ? "destructive" : "secondary"}>
+                <tr key={s.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                  <td className="p-3 align-middle whitespace-nowrap font-medium">{s.product.code} - {s.product.designation}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.initialStock}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.totalPurchases}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.totalSales}</td>
+                  <td className="p-3 align-middle whitespace-nowrap font-bold">{s.currentStock}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.product.minStock}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">
+                    <span className={`inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap ${s.stockStatus === "Alerte" ? "bg-destructive/10 text-destructive" : "bg-secondary text-secondary-foreground"}`}>
                       {s.stockStatus === "Alerte" ? "Alerte" : "OK"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{Number(s.costValue).toFixed(2)}</TableCell>
-                  <TableCell>{Number(s.potentialMargin).toFixed(2)}</TableCell>
-                </TableRow>
+                    </span>
+                  </td>
+                  <td className="p-3 align-middle whitespace-nowrap">{Number(s.costValue).toFixed(2)}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{Number(s.potentialMargin).toFixed(2)}</td>
+                </tr>
               ))
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
     </div>
   );

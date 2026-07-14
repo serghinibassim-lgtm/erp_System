@@ -1,13 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface Supplier {
@@ -33,6 +26,8 @@ export default function SuppliersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchSuppliers = useCallback(async () => {
     setLoading(true);
@@ -63,13 +58,19 @@ export default function SuppliersPage() {
     setOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce fournisseur ?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
-      if (res.ok) fetchSuppliers();
+      const res = await fetch(`/api/suppliers/${deleteTarget.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setDeleteTarget(null);
+        fetchSuppliers();
+      }
     } catch (err) {
       console.error(err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -100,94 +101,183 @@ export default function SuppliersPage() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Fournisseurs</h1>
           <p className="text-sm text-muted-foreground md:text-base">Gestion des fournisseurs</p>
         </div>
-        <Button className="w-full sm:w-auto" onClick={openCreate}>Nouveau fournisseur</Button>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{editingId ? "Modifier le fournisseur" : "Ajouter un fournisseur"}</DialogTitle></DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Code</Label>
-                <Input id="code" value={form.code} onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom</Label>
-                <Input id="name" value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Téléphone</Label>
-                <Input id="phone" value={form.phone} onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Adresse</Label>
-                <Input id="address" value={form.address} onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ice">ICE</Label>
-                <Input id="ice" value={form.ice} onChange={(e) => setForm(p => ({ ...p, ice: e.target.value }))} />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-                <Button type="submit" disabled={saving}>{saving ? "..." : editingId ? "Modifier" : "Enregistrer"}</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <button
+          className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto"
+          onClick={openCreate}
+        >
+          Nouveau fournisseur
+        </button>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Input
+        <input
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:max-w-sm"
+          className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-sm"
         />
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Téléphone</TableHead>
-              <TableHead>Adresse</TableHead>
-              <TableHead>ICE</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="relative w-full overflow-x-auto rounded-md border">
+        <table className="w-full caption-bottom text-base border-collapse">
+          <thead className="[&_tr]:border-b">
+            <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Code</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Nom</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Téléphone</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Adresse</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">ICE</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 w-24">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="[&_tr:last-child]:border-0">
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Chargement...</TableCell>
-              </TableRow>
+              <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                <td colSpan={6} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Chargement...</td>
+              </tr>
             ) : suppliers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Aucun fournisseur trouvé</TableCell>
-              </TableRow>
+              <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                <td colSpan={6} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Aucun fournisseur trouvé</td>
+              </tr>
             ) : (
               suppliers.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium whitespace-nowrap">{s.code}</TableCell>
-                  <TableCell className="whitespace-nowrap">{s.name}</TableCell>
-                  <TableCell className="whitespace-nowrap">{s.phone || "-"}</TableCell>
-                  <TableCell>{s.address || "-"}</TableCell>
-                  <TableCell>{s.ice || "-"}</TableCell>
-                  <TableCell>
+                <tr key={s.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                  <td className="p-3 align-middle whitespace-nowrap font-medium">{s.code}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.name}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.phone || "-"}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.address || "-"}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{s.ice || "-"}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} title="Modifier">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} title="Supprimer">
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      <button
+                        className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
+                        onClick={() => openEdit(s)}
+                        title="Modifier"
+                      >
+                        <Pencil className="h-5 w-5" />
+                      </button>
+                      <button
+                        className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
+                        onClick={() => setDeleteTarget(s)}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-5 w-5 text-red-500" />
+                      </button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/10" onClick={() => setOpen(false)} />
+          <div className="relative z-50 w-full max-w-[calc(100%-2rem)] rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 sm:max-w-sm">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-base font-medium leading-none">{editingId ? "Modifier le fournisseur" : "Ajouter un fournisseur"}</h2>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="code">Code</label>
+                <input
+                  id="code"
+                  value={form.code}
+                  onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))}
+                  required
+                  className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="name">Nom</label>
+                <input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+                  required
+                  className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="phone">Téléphone</label>
+                <input
+                  id="phone"
+                  value={form.phone}
+                  onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))}
+                  className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="address">Adresse</label>
+                <input
+                  id="address"
+                  value={form.address}
+                  onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))}
+                  className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="ice">ICE</label>
+                <input
+                  id="ice"
+                  value={form.ice}
+                  onChange={(e) => setForm(p => ({ ...p, ice: e.target.value }))}
+                  className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                  onClick={() => setOpen(false)}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                >
+                  {saving ? "..." : editingId ? "Modifier" : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/10" onClick={() => setDeleteTarget(null)} />
+          <div className="relative z-50 w-full max-w-[calc(100%-2rem)] rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 sm:max-w-sm">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-base font-medium leading-none">Confirmer la suppression</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Êtes-vous sûr de vouloir supprimer le fournisseur <strong>{deleteTarget?.name}</strong> (code {deleteTarget?.code}) ? Cette action est irréversible.
+            </p>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-4">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                className="inline-flex items-center justify-center rounded-lg border border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={confirmDelete}
+              >
+                {deleting ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

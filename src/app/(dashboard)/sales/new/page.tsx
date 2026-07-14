@@ -2,10 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ProductOption {
   id: string;
@@ -108,27 +104,29 @@ export default function NewSalePage() {
         <p className="text-sm text-muted-foreground md:text-base">Enregistrer une sortie de stock</p>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Détails de la vente</CardTitle></CardHeader>
-        <CardContent>
+      <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
+        <div className="flex flex-col gap-1 px-4 pt-4">
+          <h3 className="text-lg font-semibold leading-snug">Détails de la vente</h3>
+        </div>
+        <div className="px-4 pb-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && !Object.keys(fieldErrors).length && (
               <p className="text-sm text-red-600">{error}</p>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input id="date" name="date" type="date" value={form.date} onChange={handleChange} required />
+              <label htmlFor="date" className="flex items-center gap-2 text-base leading-none font-medium select-none">Date <span className="text-destructive">*</span></label>
+              <input id="date" name="date" type="date" value={form.date} onChange={handleChange} required className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="productId">Produit</Label>
+              <label htmlFor="productId" className="flex items-center gap-2 text-base leading-none font-medium select-none">Produit <span className="text-destructive">*</span></label>
               <select
                 id="productId"
                 name="productId"
                 value={form.productId}
                 onChange={handleChange}
-                className={`flex h-8 w-full rounded-lg border bg-transparent px-3 py-1 text-sm shadow-sm ${fieldErrors.productId ? "border-red-500" : "border-input"}`}
+                className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.productId ? "border-red-500" : "border-input"}`}
                 required
               >
                 <option value="">Sélectionner un produit</option>
@@ -145,13 +143,13 @@ export default function NewSalePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clientId">Client</Label>
+              <label htmlFor="clientId" className="flex items-center gap-2 text-base leading-none font-medium select-none">Client</label>
               <select
                 id="clientId"
                 name="clientId"
                 value={form.clientId}
                 onChange={handleChange}
-                className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm"
               >
                 <option value="">Sélectionner un client</option>
                 {clients.map(c => (
@@ -161,36 +159,36 @@ export default function NewSalePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="saleNumber">N° vente</Label>
-              <Input id="saleNumber" name="saleNumber" placeholder="V-001" value={form.saleNumber} onChange={handleChange} />
+              <label htmlFor="saleNumber" className="flex items-center gap-2 text-base leading-none font-medium select-none">N° vente</label>
+              <input id="saleNumber" name="saleNumber" placeholder="V-001" value={form.saleNumber} onChange={handleChange} className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="quantity">Quantité</Label>
-                <Input id="quantity" name="quantity" type="number" step="1" min="1" placeholder="1" value={form.quantity} onChange={handleChange} className={fieldErrors.quantity ? "border-red-500" : ""} required />
+                <label htmlFor="quantity" className="flex items-center gap-2 text-base leading-none font-medium select-none">Quantité <span className="text-destructive">*</span></label>
+                <input id="quantity" name="quantity" type="number" step="1" min="1" placeholder="1" value={form.quantity} onChange={handleChange} className={`h-9 w-full min-w-0 rounded-lg border bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.quantity ? "border-red-500" : "border-input"}`} required />
                 {fieldErrors.quantity && <p className="text-sm text-red-500">{fieldErrors.quantity}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="unitPrice">Prix unitaire</Label>
-                <Input id="unitPrice" name="unitPrice" type="number" step="0.01" min="0" placeholder="0.00" value={form.unitPrice} onChange={handleChange} className={fieldErrors.unitPrice ? "border-red-500" : ""} required />
+                <label htmlFor="unitPrice" className="flex items-center gap-2 text-base leading-none font-medium select-none">Prix unitaire <span className="text-destructive">*</span></label>
+                <input id="unitPrice" name="unitPrice" type="number" step="0.01" min="0" placeholder="0.00" value={form.unitPrice} onChange={handleChange} className={`h-9 w-full min-w-0 rounded-lg border bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.unitPrice ? "border-red-500" : "border-input"}`} required />
                 {fieldErrors.unitPrice && <p className="text-sm text-red-500">{fieldErrors.unitPrice}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="totalAmount">Montant total</Label>
-              <Input id="totalAmount" name="totalAmount" type="number" step="0.01" min="0" placeholder="Calculé automatiquement" value={form.totalAmount} onChange={handleChange} />
+              <label htmlFor="totalAmount" className="flex items-center gap-2 text-base leading-none font-medium select-none">Montant total</label>
+              <input id="totalAmount" name="totalAmount" type="number" step="0.01" min="0" placeholder="Calculé automatiquement" value={form.totalAmount} onChange={handleChange} className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Mode de paiement</Label>
+              <label htmlFor="paymentMethod" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement</label>
               <select
                 id="paymentMethod"
                 name="paymentMethod"
                 value={form.paymentMethod}
                 onChange={handleChange}
-                className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm"
               >
                 <option value="">Sélectionner</option>
                 <option value="Espèces">Espèces</option>
@@ -201,21 +199,21 @@ export default function NewSalePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="observation">Observation</Label>
-              <Input id="observation" name="observation" placeholder="Optionnel" value={form.observation} onChange={handleChange} />
+              <label htmlFor="observation" className="flex items-center gap-2 text-base leading-none font-medium select-none">Observation</label>
+              <input id="observation" name="observation" placeholder="Optionnel" value={form.observation} onChange={handleChange} className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50" />
             </div>
 
             <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={() => router.push("/sales")} className="w-full sm:w-auto">
+              <button type="button" onClick={() => router.push("/sales")} className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">
                 Annuler
-              </Button>
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              </button>
+              <button type="submit" disabled={loading} className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">
                 {loading ? "Enregistrement..." : "Enregistrer la vente"}
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ Application de gestion de stock et de magasin avec contrôle des prix.
 - **Frontend** — Next.js 16 (App Router) + Tailwind CSS v4
 - **Backend** — Next.js API Routes / Server Actions
 - **Base de données** — PostgreSQL + Prisma ORM
-- **UI** — shadcn/ui (minimal design)
+- **UI** — simple clair desinge (tailwind css v4)
 
 ---
 
