@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Validation échouée", errors }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.utilisateur.findUnique({ where: { email } });
     if (!user) {
       return NextResponse.json({
         error: "Email ou mot de passe incorrect",
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       }, { status: 401 });
     }
 
-    const valid = await comparePassword(password, user.password);
+    const valid = await comparePassword(password, user.motDePasse);
     if (!valid) {
       return NextResponse.json({
         error: "Email ou mot de passe incorrect",
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
 
     const response = NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.nom, email: user.email, role: user.role },
       token,
     });
 

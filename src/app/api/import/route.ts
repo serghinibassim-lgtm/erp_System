@@ -4,12 +4,12 @@ import prisma from "@/lib/prisma";
 const HEADER_ALIASES: Record<string, string[]> = {
   code: ["code produit", "code"],
   designation: ["désignation", "designation", "produit"],
-  category: ["catégorie", "categorie", "categorie"],
-  unit: ["unité de mesure", "unité", "unite", "unite de mesure"],
-  purchasePrice: ["prix achat référence", "prix achat source", "prix achat ref", "prix achat"],
-  salePrice: ["prix vente référence", "prix vente source", "prix vente ref", "prix vente"],
+  categorie: ["catégorie", "categorie", "category"],
+  unite: ["unité de mesure", "unité", "unite", "unite de mesure"],
+  prixAchat: ["prix achat référence", "prix achat source", "prix achat ref", "prix achat"],
+  prixVente: ["prix vente référence", "prix vente source", "prix vente ref", "prix vente"],
   stock: ["stock initial", "stock"],
-  minStock: ["stock minimum", "stock min"],
+  stockMin: ["stock minimum", "stock min"],
 };
 
 function findColumn(header: string[], aliases: string[]): number {
@@ -56,12 +56,12 @@ export async function POST(request: Request) {
       const col = {
         code: findColumn(header, HEADER_ALIASES.code),
         designation: findColumn(header, HEADER_ALIASES.designation),
-        category: findColumn(header, HEADER_ALIASES.category),
-        unit: findColumn(header, HEADER_ALIASES.unit),
-        purchasePrice: findColumn(header, HEADER_ALIASES.purchasePrice),
-        salePrice: findColumn(header, HEADER_ALIASES.salePrice),
+        categorie: findColumn(header, HEADER_ALIASES.categorie),
+        unite: findColumn(header, HEADER_ALIASES.unite),
+        prixAchat: findColumn(header, HEADER_ALIASES.prixAchat),
+        prixVente: findColumn(header, HEADER_ALIASES.prixVente),
         stock: findColumn(header, HEADER_ALIASES.stock),
-        minStock: findColumn(header, HEADER_ALIASES.minStock),
+        stockMin: findColumn(header, HEADER_ALIASES.stockMin),
       };
 
       if (col.code === -1 || col.designation === -1) {
@@ -79,70 +79,70 @@ export async function POST(request: Request) {
 
         if (!code || !designation) continue;
 
-        const category = col.category !== -1 ? String(row[col.category] || "").trim() : "Général";
-        const unit = col.unit !== -1 ? String(row[col.unit] || "").trim() : "pièce";
-        const initialStock = col.stock !== -1 ? parseInt(String(row[col.stock] || "0")) || 0 : 0;
-        const minStock = col.minStock !== -1 ? parseInt(String(row[col.minStock] || "0")) || 0 : 0;
-        const purchasePrice = col.purchasePrice !== -1 ? parseNumber(row[col.purchasePrice]) : 0;
-        const salePrice = col.salePrice !== -1 ? parseNumber(row[col.salePrice]) : 0;
+        const categorie = col.categorie !== -1 ? String(row[col.categorie] || "").trim() : "Général";
+        const unite = col.unite !== -1 ? String(row[col.unite] || "").trim() : "pièce";
+        const stockInitial = col.stock !== -1 ? parseInt(String(row[col.stock] || "0")) || 0 : 0;
+        const stockMin = col.stockMin !== -1 ? parseInt(String(row[col.stockMin] || "0")) || 0 : 0;
+        const prixAchatRef = col.prixAchat !== -1 ? parseNumber(row[col.prixAchat]) : 0;
+        const prixVenteRef = col.prixVente !== -1 ? parseNumber(row[col.prixVente]) : 0;
 
         try {
-          const existing = await prisma.product.findUnique({ where: { code } });
+          const existing = await prisma.produit.findUnique({ where: { code } });
           if (existing) {
-            await prisma.product.update({
+            await prisma.produit.update({
               where: { code },
               data: {
                 designation,
-                category: category || existing.category,
-                unit: unit || existing.unit,
-                purchaseRefPrice: purchasePrice || existing.purchaseRefPrice,
-                saleRefPrice: salePrice || existing.saleRefPrice,
-                initialStock: initialStock || existing.initialStock,
-                minStock: minStock || existing.minStock,
+                categorie: categorie || existing.categorie,
+                unite: unite || existing.unite,
+                prixAchatRef: prixAchatRef || existing.prixAchatRef,
+                prixVenteRef: prixVenteRef || existing.prixVenteRef,
+                stockInitial: stockInitial || existing.stockInitial,
+                stockMin: stockMin || existing.stockMin,
               },
             });
           } else {
-            await prisma.product.create({
+            await prisma.produit.create({
               data: {
                 code,
                 designation,
-                category: category || "Général",
-                unit: unit || "pièce",
-                purchaseRefPrice: purchasePrice || 0,
-                saleRefPrice: salePrice || 0,
-                initialStock,
-                minStock,
+                categorie: categorie || "Général",
+                unite: unite || "pièce",
+                prixAchatRef: prixAchatRef || 0,
+                prixVenteRef: prixVenteRef || 0,
+                stockInitial,
+                stockMin,
               },
             });
           }
 
-          const p = await prisma.product.findUnique({ where: { code } });
+          const p = await prisma.produit.findUnique({ where: { code } });
           if (p) {
-            const stock = await prisma.stock.findUnique({ where: { productId: p.id } });
+            const stock = await prisma.stock.findUnique({ where: { produitId: p.id } });
             if (!stock) {
-              const currentStock = initialStock;
+              const stockActuel = stockInitial;
               await prisma.stock.create({
                 data: {
-                  productId: p.id,
-                  initialStock,
-                  currentStock,
-                  stockStatus: currentStock <= minStock ? "Alerte" : "OK",
-                  costValue: Number(p.purchaseRefPrice) * currentStock,
-                  saleValue: Number(p.saleRefPrice) * currentStock,
-                  potentialMargin: (Number(p.saleRefPrice) - Number(p.purchaseRefPrice)) * currentStock,
+                  produitId: p.id,
+                  stockInitial,
+                  stockActuel,
+                  statutStock: stockActuel <= stockMin ? "Alerte" : "OK",
+                  valeurAchat: Number(p.prixAchatRef) * stockActuel,
+                  valeurVente: Number(p.prixVenteRef) * stockActuel,
+                  margePotentielle: (Number(p.prixVenteRef) - Number(p.prixAchatRef)) * stockActuel,
                 },
               });
             } else {
-              const currentStock = stock.initialStock + stock.totalPurchases - stock.totalSales + initialStock - stock.initialStock;
+              const stockActuel = stock.stockInitial + stock.totalAchats - stock.totalVentes + stockInitial - stock.stockInitial;
               await prisma.stock.update({
-                where: { productId: p.id },
+                where: { produitId: p.id },
                 data: {
-                  initialStock,
-                  currentStock,
-                  stockStatus: currentStock <= minStock ? "Alerte" : "OK",
-                  costValue: Number(p.purchaseRefPrice) * currentStock,
-                  saleValue: Number(p.saleRefPrice) * currentStock,
-                  potentialMargin: (Number(p.saleRefPrice) - Number(p.purchaseRefPrice)) * currentStock,
+                  stockInitial,
+                  stockActuel,
+                  statutStock: stockActuel <= stockMin ? "Alerte" : "OK",
+                  valeurAchat: Number(p.prixAchatRef) * stockActuel,
+                  valeurVente: Number(p.prixVenteRef) * stockActuel,
+                  margePotentielle: (Number(p.prixVenteRef) - Number(p.prixAchatRef)) * stockActuel,
                 },
               });
             }
@@ -176,41 +176,41 @@ export async function POST(request: Request) {
         if (!code || qty <= 0) continue;
 
         try {
-          const product = await prisma.product.findUnique({ where: { code } });
-          if (!product) continue;
+          const produit = await prisma.produit.findUnique({ where: { code } });
+          if (!produit) continue;
 
           const total = qty * price;
-          const deviation = price < Number(product.saleRefPrice)
-            ? Number(product.saleRefPrice) - price
+          const ecart = price < Number(produit.prixVenteRef)
+            ? Number(produit.prixVenteRef) - price
             : null;
 
-          await prisma.sale.create({
+          await prisma.vente.create({
             data: {
               date: new Date("2024-01-01"),
-              saleNumber: `HIST-${code}`,
+              numeroVente: `HIST-${code}`,
               clientId: null,
-              productId: product.id,
-              quantity: qty,
-              unitPrice: price,
-              totalAmount: total,
-              deviation,
-              alert: deviation != null && deviation > 0,
+              produitId: produit.id,
+              quantite: qty,
+              prixUnitaire: price,
+              montantTotal: total,
+              ecart,
+              alerte: ecart != null && ecart > 0,
             },
           });
 
-          const stock = await prisma.stock.findUnique({ where: { productId: product.id } });
+          const stock = await prisma.stock.findUnique({ where: { produitId: produit.id } });
           if (stock) {
-            const newTotalSales = stock.totalSales + qty;
-            const newCurrentStock = stock.initialStock + stock.totalPurchases - newTotalSales;
+            const newTotalVentes = stock.totalVentes + qty;
+            const newStockActuel = stock.stockInitial + stock.totalAchats - newTotalVentes;
             await prisma.stock.update({
-              where: { productId: product.id },
+              where: { produitId: produit.id },
               data: {
-                totalSales: newTotalSales,
-                currentStock: newCurrentStock,
-                stockStatus: newCurrentStock <= product.minStock ? "Alerte" : "OK",
-                costValue: Number(product.purchaseRefPrice) * newCurrentStock,
-                saleValue: Number(product.saleRefPrice) * newCurrentStock,
-                potentialMargin: (Number(product.saleRefPrice) - Number(product.purchaseRefPrice)) * newCurrentStock,
+                totalVentes: newTotalVentes,
+                stockActuel: newStockActuel,
+                statutStock: newStockActuel <= produit.stockMin ? "Alerte" : "OK",
+                valeurAchat: Number(produit.prixAchatRef) * newStockActuel,
+                valeurVente: Number(produit.prixVenteRef) * newStockActuel,
+                margePotentielle: (Number(produit.prixVenteRef) - Number(produit.prixAchatRef)) * newStockActuel,
               },
             });
           }

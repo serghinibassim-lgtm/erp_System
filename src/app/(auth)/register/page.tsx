@@ -23,7 +23,7 @@ export default function RegisterPage() {
 
     const result = await register(name, email, password);
     if (result.ok) {
-      router.push("/");
+      router.push("/dashboard");
     } else {
       setError(result.error || "Erreur d'inscription");
       if (result.errors) setFieldErrors(result.errors);

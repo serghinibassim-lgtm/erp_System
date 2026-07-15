@@ -15,15 +15,15 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const clients = await prisma.client.findMany({
+    const fournisseurs = await prisma.fournisseur.findMany({
       where,
       take: limit,
       orderBy: { nom: "asc" },
     });
 
-    return NextResponse.json({ clients });
+    return NextResponse.json({ fournisseurs });
   } catch (err) {
-    console.error("Clients GET error:", err);
+    console.error("Fournisseurs GET error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { code, nom, telephone, adresse } = body;
+    const { code, nom, telephone, adresse, ice } = body;
 
     if (!code || !code.trim()) {
       return NextResponse.json({ error: "Le code est requis", errors: { code: "Requis" } }, { status: 400 });
@@ -40,18 +40,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Le nom est requis", errors: { nom: "Requis" } }, { status: 400 });
     }
 
-    const existing = await prisma.client.findUnique({ where: { code } });
+    const existing = await prisma.fournisseur.findUnique({ where: { code } });
     if (existing) {
       return NextResponse.json({ error: "Code déjà utilisé", errors: { code: "Ce code existe déjà" } }, { status: 409 });
     }
 
-    const client = await prisma.client.create({
-      data: { code, nom, telephone: telephone || null, adresse: adresse || null },
+    const fournisseur = await prisma.fournisseur.create({
+      data: { code, nom, telephone: telephone || null, adresse: adresse || null, ice: ice || null },
     });
 
-    return NextResponse.json({ client }, { status: 201 });
+    return NextResponse.json({ fournisseur }, { status: 201 });
   } catch (err) {
-    console.error("Clients POST error:", err);
+    console.error("Fournisseurs POST error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

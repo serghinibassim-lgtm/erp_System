@@ -4,23 +4,33 @@ import prisma from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get("search") || "";
+    const recherche = searchParams.get("search") || "";
 
     const where: Record<string, unknown> = {};
-    if (search) {
-      where.product = {
+    if (recherche) {
+      where.produit = {
         OR: [
-          { code: { contains: search, mode: "insensitive" } },
-          { designation: { contains: search, mode: "insensitive" } },
+          { code: { contains: recherche, mode: "insensitive" } },
+          { designation: { contains: recherche, mode: "insensitive" } },
         ],
       };
     }
 
+    const minQuantity = searchParams.get("minQuantity");
+    const maxQuantity = searchParams.get("maxQuantity");
+    
+    if (minQuantity || maxQuantity) {
+      const quantityFilter: Record<string, number> = {};
+      if (minQuantity) quantityFilter.gte = parseInt(minQuantity);
+      if (maxQuantity) quantityFilter.lte = parseInt(maxQuantity);
+      where.stockActuel = quantityFilter;
+    }
+
     const stocks = await prisma.stock.findMany({
       where,
-      orderBy: { product: { code: "asc" } },
+      orderBy: { produit: { code: "asc" } },
       include: {
-        product: { select: { code: true, designation: true, unit: true, minStock: true } },
+        produit: { select: { code: true, designation: true, unite: true, stockMin: true } },
       },
     });
 

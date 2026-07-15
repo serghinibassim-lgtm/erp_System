@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     if (token) {
       try {
         await verifyTokenEdge(token);
-        return NextResponse.redirect(new URL("/", request.url));
+        return NextResponse.redirect(new URL("/dashboard", request.url));
       } catch {
         return NextResponse.next();
       }
@@ -19,6 +19,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (
+    pathname === "/" ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
@@ -26,23 +27,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getTokenFromRequest(request);
-  if (!token) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  // We only strictly protect /dashboard and its sub-routes, plus any protected APIs
+  if (pathname.startsWith("/dashboard") || (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth"))) {
+    const token = await getTokenFromRequest(request);
+    if (!token) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/login", request.url));
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+
+    try {
+      await verifyTokenEdge(token);
+      return NextResponse.next();
+    } catch {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Token invalide" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
 
-  try {
-    await verifyTokenEdge(token);
-    return NextResponse.next();
-  } catch {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Token invalide" }, { status: 401 });
-    }
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  return NextResponse.next();
 }
 
 export const config = {

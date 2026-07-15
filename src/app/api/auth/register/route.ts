@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Validation échouée", errors }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.utilisateur.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json({
         error: "Email déjà utilisé",
@@ -26,14 +26,14 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hashPassword(password);
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+    const user = await prisma.utilisateur.create({
+      data: { nom: name, email, motDePasse: hashedPassword },
     });
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
 
     const response = NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.nom, email: user.email, role: user.role },
       token,
     }, { status: 201 });
 

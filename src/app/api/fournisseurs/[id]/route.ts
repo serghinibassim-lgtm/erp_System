@@ -6,31 +6,32 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await prisma.client.findUnique({ where: { id } });
+    const existing = await prisma.fournisseur.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
+      return NextResponse.json({ error: "Fournisseur introuvable" }, { status: 404 });
     }
 
     if (body.code && body.code !== existing.code) {
-      const duplicate = await prisma.client.findUnique({ where: { code: body.code } });
+      const duplicate = await prisma.fournisseur.findUnique({ where: { code: body.code } });
       if (duplicate) {
         return NextResponse.json({ error: "Code déjà utilisé", errors: { code: "Ce code existe déjà" } }, { status: 409 });
       }
     }
 
-    const client = await prisma.client.update({
+    const fournisseur = await prisma.fournisseur.update({
       where: { id },
       data: {
         ...(body.code !== undefined && { code: body.code }),
         ...(body.nom !== undefined && { nom: body.nom }),
         ...(body.telephone !== undefined && { telephone: body.telephone || null }),
         ...(body.adresse !== undefined && { adresse: body.adresse || null }),
+        ...(body.ice !== undefined && { ice: body.ice || null }),
       },
     });
 
-    return NextResponse.json({ client });
+    return NextResponse.json({ fournisseur });
   } catch (err) {
-    console.error("Client PATCH error:", err);
+    console.error("Fournisseur PATCH error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -39,15 +40,15 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
   try {
     const { id } = await params;
 
-    const existing = await prisma.client.findUnique({ where: { id } });
+    const existing = await prisma.fournisseur.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
+      return NextResponse.json({ error: "Fournisseur introuvable" }, { status: 404 });
     }
 
-    await prisma.client.delete({ where: { id } });
+    await prisma.fournisseur.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Client DELETE error:", err);
+    console.error("Fournisseur DELETE error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

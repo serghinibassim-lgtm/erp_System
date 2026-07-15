@@ -10,16 +10,17 @@ export async function GET(request: NextRequest) {
     }
 
     const payload = verifyToken(token);
-    const user = await prisma.user.findUnique({
+    const user = await prisma.utilisateur.findUnique({
       where: { id: payload.userId },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, nom: true, email: true, role: true },
     });
 
     if (!user) {
       return NextResponse.json({ user: null });
     }
 
-    return NextResponse.json({ user });
+    // Remap nom to name for frontend compatibility if needed
+    return NextResponse.json({ user: { ...user, name: user.nom } });
   } catch {
     return NextResponse.json({ user: null });
   }

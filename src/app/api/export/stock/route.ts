@@ -4,27 +4,27 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const stocks = await prisma.stock.findMany({
-      orderBy: { product: { code: "asc" } },
+      orderBy: { produit: { code: "asc" } },
       include: {
-        product: { select: { code: true, designation: true, unit: true, minStock: true } },
+        produit: { select: { code: true, designation: true, unite: true, stockMin: true } },
       },
     });
 
     const header = "Code;Désignation;Unité;Stock initial;Achats;Ventes;Stock actuel;Seuil min;Statut;Valeur coût;Valeur vente;Marge potentielle";
     const rows = stocks.map(s =>
       [
-        s.product.code,
-        s.product.designation,
-        s.product.unit,
-        s.initialStock,
-        s.totalPurchases,
-        s.totalSales,
-        s.currentStock,
-        s.product.minStock,
-        s.stockStatus,
-        Number(s.costValue).toFixed(2),
-        Number(s.saleValue).toFixed(2),
-        Number(s.potentialMargin).toFixed(2),
+        s.produit.code,
+        s.produit.designation,
+        s.produit.unite,
+        s.stockInitial,
+        s.totalAchats,
+        s.totalVentes,
+        s.stockActuel,
+        s.produit.stockMin,
+        s.statutStock,
+        Number(s.valeurAchat).toFixed(2),
+        Number(s.valeurVente).toFixed(2),
+        Number(s.margePotentielle).toFixed(2),
       ].join(";")
     );
 
