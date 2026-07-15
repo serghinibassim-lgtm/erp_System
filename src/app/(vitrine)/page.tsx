@@ -13,7 +13,7 @@ export default function VitrinePage() {
           Gérez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">magasin</span> et vos stocks avec simplicité
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl">
-          L'application de gestion de stock nouvelle génération. Suivez vos achats, contrôlez vos ventes, et maximisez vos marges sans effort.
+          L&apos;application de gestion de stock nouvelle génération. Suivez vos achats, contrôlez vos ventes, et maximisez vos marges sans effort.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <Link href="/register" className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-8 text-base font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:scale-105">
@@ -47,7 +47,7 @@ export default function VitrinePage() {
               <BarChart3 className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-bold mb-2">Achats & Ventes</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">Enregistrez vos mouvements avec précision. L'application calcule automatiquement les marges et tendances.</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">Enregistrez vos mouvements avec précision. L&apos;application calcule automatiquement les marges et tendances.</p>
           </div>
           
           <div className="flex flex-col items-start p-6 bg-card rounded-2xl border shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
@@ -55,7 +55,7 @@ export default function VitrinePage() {
               <ShieldCheck className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-bold mb-2">Alertes Intelligentes</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">Système avancé d'alertes sur les prix d'achats trop élevés et les prix de ventes trop bas.</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">Système avancé d&apos;alertes sur les prix d&apos;achats trop élevés et les prix de ventes trop bas.</p>
           </div>
           
           <div className="flex flex-col items-start p-6 bg-card rounded-2xl border shadow-sm transition-all hover:shadow-md hover:-translate-y-1">

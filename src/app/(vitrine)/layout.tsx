@@ -17,7 +17,7 @@ export default function VitrineLayout({ children }: { children: React.ReactNode 
               Connexion
             </Link>
             <Link href="/register" className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
-              S'inscrire
+              S&apos;inscrire
             </Link>
           </nav>
         </div>
