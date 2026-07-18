@@ -6,9 +6,7 @@ export default function VitrinePage() {
     <div className="flex flex-col items-center">
       {/* Hero Section */}
       <section className="w-full px-4 py-24 sm:py-32 flex flex-col items-center text-center space-y-8 bg-gradient-to-b from-primary/10 via-background to-background">
-        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-primary bg-primary/10">
-          Nouveau ! La version 2.0 est disponible
-        </div>
+
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground max-w-4xl leading-tight">
           Gérez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">magasin</span> et vos stocks avec simplicité
         </h1>

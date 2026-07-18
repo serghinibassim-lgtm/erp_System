@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type {Metadata} from "next";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import {AuthProvider} from "@/context/AuthContext";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "ARP Gestion Magasin",
@@ -21,7 +16,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} h-full antialiased`}
+      className={`h-full antialiased`}
     >
       <body className="min-h-full text-base font-sans selection:bg-primary/20">
         <AuthProvider>{children}</AuthProvider>
