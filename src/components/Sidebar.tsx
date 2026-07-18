@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-const navItems = [
+const allNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/produits", label: "Produits", icon: Package },
   { href: "/dashboard/achats", label: "Achats", icon: ShoppingCart },
@@ -18,7 +18,7 @@ const navItems = [
   { href: "/dashboard/fournisseurs", label: "Fournisseurs", icon: Building2 },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
-  { href: "/dashboard/import", label: "Import", icon: Upload },
+ // { href: "/dashboard/import", label: "Import", icon: Upload },
 ];
 
 export default function Sidebar() {
@@ -36,6 +36,12 @@ export default function Sidebar() {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
+
+  const navItems = allNavItems.filter(item =>
+    item.href === "/dashboard/parametres" ? user?.role === "RESPONSABLE" : true
+  );
+
+  const roleLabel = user?.role === "RESPONSABLE" ? "Responsable" : user?.role === "EMPLOYER" ? "Employé" : user?.role || "";
 
   const handleNav = (href: string) => {
     setOpen(false);
@@ -73,17 +79,22 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t px-6 py-6">
-        <div className="flex items-center gap-4 px-1">
+          <div className="flex items-center gap-4 px-1">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
             {user?.name?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-bold text-foreground">{user?.name}</p>
             <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
+            {roleLabel && (
+              <span className="inline-flex mt-1 h-5 items-center rounded-full border border-transparent bg-primary/10 px-2 text-xs font-medium text-primary">
+                {roleLabel}
+              </span>
+            )}
           </div>
         </div>
-        <button onClick={handleLogout} className="mt-6 inline-flex w-full items-center gap-3 rounded-xl px-5 py-3.5 text-lg font-semibold whitespace-nowrap transition-all hover:bg-destructive/10 hover:text-destructive text-muted-foreground disabled:pointer-events-none disabled:opacity-50">
-          <LogOut className="h-6 w-6 shrink-0" />
+        <button onClick={handleLogout} className="mt-6 bg-red-100 inline-flex w-full items-center gap-3 rounded-xl px-5 py-3.5 text-lg font-semibold whitespace-nowrap transition-all hover:bg-destructive/10 hover:text-destructive text-muted-foreground disabled:pointer-events-none disabled:opacity-50">
+          <LogOut className="h-6 w-6 shrink-0 " />
           Déconnexion
         </button>
       </div>

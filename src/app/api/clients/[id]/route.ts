@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = requireRole(request, ["RESPONSABLE"]);
+  if ("error" in auth) return auth.error;
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -35,7 +39,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = requireRole(request, ["RESPONSABLE"]);
+  if ("error" in auth) return auth.error;
+
   try {
     const { id } = await params;
 

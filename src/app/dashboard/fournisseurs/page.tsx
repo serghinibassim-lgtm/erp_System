@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface Supplier {
   id: string;
@@ -19,6 +20,8 @@ interface FormState {
 const emptyForm: FormState = { code: "", nom: "", telephone: "", adresse: "", ice: "" };
 
 export default function SuppliersPage() {
+  const { user } = useAuth();
+  const isResponsable = user?.role === "RESPONSABLE";
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -101,12 +104,14 @@ export default function SuppliersPage() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Fournisseurs</h1>
           <p className="text-sm text-muted-foreground md:text-base">Gestion des fournisseurs</p>
         </div>
-        <button
-          className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto"
-          onClick={openCreate}
-        >
-          Nouveau fournisseur
-        </button>
+        {isResponsable && (
+          <button
+            className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto"
+            onClick={openCreate}
+          >
+            Nouveau fournisseur
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -127,17 +132,17 @@ export default function SuppliersPage() {
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Téléphone</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Adresse</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">ICE</th>
-              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 w-24">Actions</th>
+              {isResponsable && <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 w-24">Actions</th>}
             </tr>
           </thead>
           <tbody className="[&_tr:last-child]:border-0">
             {loading ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                <td colSpan={6} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Chargement...</td>
+                <td colSpan={isResponsable ? 6 : 5} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Chargement...</td>
               </tr>
             ) : suppliers.length === 0 ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                <td colSpan={6} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Aucun fournisseur trouvé</td>
+                <td colSpan={isResponsable ? 6 : 5} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Aucun fournisseur trouvé</td>
               </tr>
             ) : (
               suppliers.map((s) => (
@@ -147,24 +152,26 @@ export default function SuppliersPage() {
                   <td className="p-3 align-middle whitespace-nowrap">{s.telephone || "-"}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.adresse || "-"}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.ice || "-"}</td>
-                  <td className="p-3 align-middle whitespace-nowrap">
-                    <div className="flex gap-1">
-                      <button
-                        className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
-                        onClick={() => openEdit(s)}
-                        title="Modifier"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </button>
-                      <button
-                        className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
-                        onClick={() => setDeleteTarget(s)}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-5 w-5 text-red-500" />
-                      </button>
-                    </div>
-                  </td>
+                  {isResponsable && (
+                    <td className="p-3 align-middle whitespace-nowrap">
+                      <div className="flex gap-1">
+                        <button
+                          className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
+                          onClick={() => openEdit(s)}
+                          title="Modifier"
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </button>
+                        <button
+                          className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
+                          onClick={() => setDeleteTarget(s)}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-5 w-5 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

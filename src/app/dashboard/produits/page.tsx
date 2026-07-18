@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Download } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface Stock {
   stockActuel: number;
@@ -23,6 +24,8 @@ interface Produit {
 }
 
 export default function ProduitsPage() {
+  const { user } = useAuth();
+  const isResponsable = user?.role === "RESPONSABLE";
   const [produits, setProduits] = useState<Produit[]>([]);
   const [recherche, setRecherche] = useState("");
   const [loading, setLoading] = useState(true);
@@ -59,9 +62,11 @@ export default function ProduitsPage() {
             <Download className="h-4 w-4" />
             CSV
           </button>
-          <Link href="/dashboard/produits/nouveau">
-            <button className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">Nouveau produit</button>
-          </Link>
+          {isResponsable && (
+            <Link href="/dashboard/produits/nouveau">
+              <button className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">Nouveau produit</button>
+            </Link>
+          )}
         </div>
       </div>
 

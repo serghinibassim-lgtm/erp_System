@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Upload, Plus, Pencil, Trash2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface Parameter {
   id: string;
@@ -11,6 +12,8 @@ interface Parameter {
 }
 
 export default function ParametersPage() {
+  const { user } = useAuth();
+  const isResponsable = user?.role === "RESPONSABLE";
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
@@ -107,6 +110,15 @@ export default function ParametersPage() {
     handleChange(key, newVal);
     handleSave(key, newVal);
   };
+
+  if (!isResponsable) {
+    return (
+      <div className="mx-auto max-w-lg space-y-6 text-center py-20">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Accès refusé</h1>
+        <p className="text-muted-foreground">Vous n&apos;avez pas les droits nécessaires pour accéder à cette page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

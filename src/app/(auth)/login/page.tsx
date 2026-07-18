@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
@@ -75,12 +74,7 @@ export default function LoginPage() {
             <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4">
               {loading ? "Connexion..." : "Se connecter"}
             </button>
-            <p className="text-center text-sm text-muted-foreground">
-              Pas encore de compte ?{" "}
-              <Link href="/register" className="font-medium text-primary hover:underline">
-                S&apos;inscrire
-              </Link>
-            </p>
+
           </form>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 interface HistoriquePrix {
   id: string;
@@ -41,6 +42,8 @@ interface Produit {
 export default function ProduitDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { user } = useAuth();
+  const isResponsable = user?.role === "RESPONSABLE";
 
   const [produit, setProduit] = useState<Produit | null>(null);
   const [editing, setEditing] = useState(false);
@@ -178,12 +181,14 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <div className="flex flex-wrap gap-2">
           {!editing ? (
-            <button
-              className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
-              onClick={() => setEditing(true)}
-            >
-              Modifier
-            </button>
+            isResponsable && (
+              <button
+                className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={() => setEditing(true)}
+              >
+                Modifier
+              </button>
+            )
           ) : (
             <>
               <button

@@ -5,7 +5,7 @@ import { getTokenFromRequest, verifyTokenEdge } from "@/lib/auth-edge";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
+  if (pathname.startsWith("/login")) {
     const token = await getTokenFromRequest(request);
     if (token) {
       try {
@@ -27,7 +27,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // We only strictly protect /dashboard and its sub-routes, plus any protected APIs
   if (pathname.startsWith("/dashboard") || (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth"))) {
     const token = await getTokenFromRequest(request);
     if (!token) {
@@ -38,7 +37,13 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      await verifyTokenEdge(token);
+      const payload = await verifyTokenEdge(token);
+
+      // Seul RESPONSABLE peut accéder aux paramètres
+      if (pathname.startsWith("/dashboard/parametres") && payload.role !== "RESPONSABLE") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
       return NextResponse.next();
     } catch {
       if (pathname.startsWith("/api/")) {

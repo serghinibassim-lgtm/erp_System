@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET || "arp-secret-key-change-in-production";
 
@@ -33,4 +34,25 @@ export function getTokenFromRequest(request: NextRequest): string | null {
   }
   const cookie = request.cookies.get("token");
   return cookie?.value || null;
+}
+
+export function getAuthUser(request: NextRequest): JwtPayload | null {
+  const token = getTokenFromRequest(request);
+  if (!token) return null;
+  try {
+    return verifyToken(token);
+  } catch {
+    return null;
+  }
+}
+
+export function requireRole(request: NextRequest, roles: string[]): { user: JwtPayload } | { error: NextResponse } {
+  const user = getAuthUser(request);
+  if (!user) {
+    return { error: NextResponse.json({ error: "Non authentifié" }, { status: 401 }) };
+  }
+  if (!roles.includes(user.role)) {
+    return { error: NextResponse.json({ error: "Accès refusé" }, { status: 403 }) };
+  }
+  return { user };
 }

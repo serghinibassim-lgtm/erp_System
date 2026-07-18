@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = requireRole(request, ["RESPONSABLE"]);
+  if ("error" in auth) return auth.error;
+
   try {
     const body = await request.json();
     const { code, nom, telephone, adresse } = body;

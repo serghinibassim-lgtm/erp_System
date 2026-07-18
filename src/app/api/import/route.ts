@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 const HEADER_ALIASES: Record<string, string[]> = {
   code: ["code produit", "code"],
@@ -28,7 +30,10 @@ function parseNumber(val: unknown): number {
   return isNaN(n) ? 0 : n;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = requireRole(request, ["RESPONSABLE"]);
+  if ("error" in auth) return auth.error;
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;

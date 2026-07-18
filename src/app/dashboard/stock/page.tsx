@@ -10,7 +10,7 @@ interface StockItem {
   totalAchats: number;
   totalVentes: number;
   statutStock: string;
-  valeurCout: number;
+  valeurAchat: number;
   valeurVente: number;
   margePotentielle: number;
   produit: {
@@ -49,7 +49,7 @@ export default function StockPage() {
   useEffect(() => { fetchStocks(); }, [fetchStocks]);
 
   const totalStock = stocks.reduce((sum, s) => sum + s.stockActuel, 0);
-  const totalValue = stocks.reduce((sum, s) => sum + Number(s.valeurCout), 0);
+  const totalValue = stocks.reduce((sum, s) => sum + Number(s.valeurAchat), 0);
   const totalSaleValue = stocks.reduce((sum, s) => sum + Number(s.valeurVente), 0);
   const totalMargin = stocks.reduce((sum, s) => sum + Number(s.margePotentielle), 0);
   const alertCount = stocks.filter(s => s.statutStock === "Alerte").length;
@@ -174,7 +174,7 @@ export default function StockPage() {
                       {s.statutStock === "Alerte" ? "Alerte" : "OK"}
                     </span>
                   </td>
-                  <td className="p-3 align-middle whitespace-nowrap">{Number(s.valeurCout).toFixed(2)}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">{Number(s.valeurAchat).toFixed(2)}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{Number(s.margePotentielle).toFixed(2)}</td>
                 </tr>
               ))

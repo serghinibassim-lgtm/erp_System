@@ -16,15 +16,26 @@ async function main() {
   await prisma.utilisateur.deleteMany();
   await prisma.parametre.deleteMany();
 
-  // 2. Créer un utilisateur Admin par défaut
-  console.log("👤 Création de l'utilisateur administrateur...");
-  const motDePasseHash = await bcrypt.hash('admin123', 10);
+  // 2. Créer les utilisateurs (Responsable et Employé)
+  console.log('👤 Création des utilisateurs...');
+  const hashResp = await bcrypt.hash('responsable123', 10);
+  const hashEmp = await bcrypt.hash('employer123', 10);
+
   await prisma.utilisateur.create({
     data: {
-      nom: 'Administrateur',
-      email: 'admin@arp.com',
-      motDePasse: motDePasseHash,
-      role: 'ADMIN',
+      nom: 'Responsable',
+      email: 'responsable@arp.com',
+      motDePasse: hashResp,
+      role: 'RESPONSABLE',
+    },
+  });
+
+  await prisma.utilisateur.create({
+    data: {
+      nom: 'Employé',
+      email: 'employer@arp.com',
+      motDePasse: hashEmp,
+      role: 'EMPLOYER',
     },
   });
 

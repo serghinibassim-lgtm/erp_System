@@ -14,10 +14,6 @@ export default function VitrinePage() {
           L&apos;application de gestion de stock nouvelle génération. Suivez vos achats, contrôlez vos ventes, et maximisez vos marges sans effort.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <Link href="/register" className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-8 text-base font-medium text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:scale-105">
-            Démarrer gratuitement
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
           <Link href="/login" className="inline-flex h-12 items-center justify-center rounded-full border border-input bg-background px-8 text-base font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
             Se connecter
           </Link>
@@ -71,11 +67,7 @@ export default function VitrinePage() {
         <div className="max-w-4xl mx-auto px-4 text-center space-y-8">
           <h2 className="text-3xl sm:text-5xl font-bold tracking-tight">Prêt à transformer votre magasin ?</h2>
           <p className="text-xl opacity-90 max-w-2xl mx-auto">Rejoignez-nous et découvrez la manière la plus simple de gérer vos stocks et fournisseurs.</p>
-          <div className="pt-4">
-            <Link href="/register" className="inline-flex h-12 items-center justify-center rounded-full bg-background text-primary px-8 text-base font-bold shadow-lg transition-transform hover:scale-105">
-              Créer mon compte maintenant
-            </Link>
-          </div>
+
         </div>
       </section>
     </div>

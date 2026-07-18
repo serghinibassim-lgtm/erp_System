@@ -13,12 +13,10 @@ export default function VitrineLayout({ children }: { children: React.ReactNode 
             <span className="text-xl font-bold tracking-tight">ARP Magasin</span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link href="/login" className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
               Connexion
             </Link>
-            <Link href="/register" className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
-              S&apos;inscrire
-            </Link>
+         
           </nav>
         </div>
       </header>
