@@ -18,7 +18,7 @@ const allNavItems = [
   { href: "/dashboard/fournisseurs", label: "Fournisseurs", icon: Building2 },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
- // { href: "/dashboard/import", label: "Import", icon: Upload },
+ { href: "/dashboard/import", label: "Import", icon: Upload },
 ];
 
 export default function Sidebar() {

@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 
+
+
 export async function GET() {
   try {
     const parametres = await prisma.parametre.findMany({ orderBy: { cle: "asc" } });

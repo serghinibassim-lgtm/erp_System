@@ -139,7 +139,7 @@ export default function AchatsPage() {
                     <td className="p-3 align-middle whitespace-nowrap">{Number(p.prixUnitaire).toFixed(2)}</td>
                     <td className="p-3 align-middle whitespace-nowrap">{Number(p.montantTotal).toFixed(2)}</td>
                     <td className="p-3 align-middle whitespace-nowrap">
-                      {p.alerte ? <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-destructive/10 text-destructive">Alerte</span> : <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-secondary text-secondary-foreground">OK</span>}
+                      {p.alerte ? <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-red-300 text-destructive-foreground">Vérifier prix</span> : <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-green-200 text-secondary-foreground">OK</span>}
                     </td>
                   </tr>
                 ))

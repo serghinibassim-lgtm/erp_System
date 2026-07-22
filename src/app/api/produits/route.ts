@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
+
+
 export async function POST(request: NextRequest) {
   const auth = requireRole(request, ["RESPONSABLE"]);
   if ("error" in auth) return auth.error;
