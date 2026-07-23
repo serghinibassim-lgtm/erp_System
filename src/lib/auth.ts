@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "arp-secret-key-change-in-productio
 export interface JwtPayload {
   userId: string;
   email: string;
-  role: string;
+  role: string; 
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -20,7 +20,7 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "40h" });
 }
 
 export function verifyToken(token: string): JwtPayload {

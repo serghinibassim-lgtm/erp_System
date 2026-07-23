@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect, useCallback} from "react";
+import {useState, useEffect, useCallback, ChangeEvent} from "react";
 import Link from "next/link";
 import {Download} from "lucide-react";
 import {useAuth} from "@/context/AuthContext";
@@ -23,19 +23,45 @@ interface Produit {
     stock: Stock | null;
 }
 
+
 export default function ProduitsPage() {
     const {user} = useAuth();
     const isResponsable = user?.role === "RESPONSABLE";
     const [produits, setProduits] = useState<Produit[]>([]);
+    const [categorie, setCategorie] = useState<[string[] | string]>();
     const [recherche, setRecherche] = useState("");
     const [loading, setLoading] = useState(true);
+    const [filtrParCtegories, setFiltrParCtegories] = useState("");
+
+
+    let all: string;
 
     const fetchProduits = useCallback(async () => {
         setLoading(true);
         try {
+
+            try {
+                const allParametres = await fetch('/api/parametres');
+                const parametreeData = await allParametres.json();
+                if (parametreeData) {
+                    const cat = parametreeData.parametres.find((p: { cle: string }) => p.cle === "categories");
+
+                    if (cat?.valeur) {
+                        let listcategorie = cat.valeur.split("\n").filter((s: string) => s.trimStart());
+                        setCategorie(listcategorie);
+                    }
+                } else {
+                    console.log(' err dna la recuperation des categorie')
+                }
+            } catch (err) {
+                console.error(err);
+            }
+
+
             const params = new URLSearchParams();
             if (recherche) params.set("search", recherche);
-            const res = await fetch(`/api/produits?${params}`);
+            if (filtrParCtegories) params.set("categoier", filtrParCtegories);
+            const res = await fetch(`/api/produits?${params}&categoier=${filtrParCtegories}`);
             const data = await res.json();
             if (res.ok) setProduits(data.produits);
         } catch (err) {
@@ -43,7 +69,7 @@ export default function ProduitsPage() {
         } finally {
             setLoading(false);
         }
-    }, [recherche]);
+    }, [recherche, filtrParCtegories]);
 
     useEffect(() => {
         fetchProduits();
@@ -59,10 +85,15 @@ export default function ProduitsPage() {
                 <div className="flex gap-2">
                     <button
                         className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted h-7 gap-1 px-2.5 text-xs font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 gap-2"
-                        onClick={() => window.open("/api/export/produits")}
+                        onClick={() => window.open("/api/export/produits/?format=csv")}
                     >
                         <Download className="h-4 w-4"/>
                         CSV
+                    </button>
+                    <button onClick={() => window.open("/api/export/produits/?format=xlsx")} disabled={loading}
+                            className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted h-7 gap-1 px-2.5 text-xs font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 gap-2">
+                        <Download className="h-4 w-4"/>
+                        XLSX
                     </button>
                     {isResponsable && (
                         <Link href="/dashboard/produits/nouveau">
@@ -82,7 +113,26 @@ export default function ProduitsPage() {
                     onChange={(e) => setRecherche(e.target.value)}
                     className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 w-full sm:max-w-sm"
                 />
+                <div>
+                    <select name="dddd" id="ss"
+                            onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                                setFiltrParCtegories(e.target.value);
+                            }
+
+                            }
+                            className={'flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm border-input'}
+
+                    >
+                        <option value="">Sélectionner une catégorie</option>
+                        {
+                            categorie?.map(c => (
+                                <option key={categorie.indexOf(c)} value={c}>{c}</option>
+                            ))
+                        }
+                    </select>
+                </div>
             </div>
+
 
             <div className="relative w-full overflow-x-auto rounded-md border">
                 <table className="w-full caption-bottom text-base border-collapse">

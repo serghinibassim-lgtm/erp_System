@@ -6,10 +6,12 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const recherche = searchParams.get("search") || "";
-    const categorie = searchParams.get("category") || "";
+    const categorie = searchParams.get("categoier") || "";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
     const skip = (page - 1) * limit;
+
+    console.log("____________>>>>"+categorie);
 
     const where: Record<string, unknown> = {};
     if (recherche) {
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
       ];
     }
     if (categorie) {
-      where.categorie = categorie;
+      where.categorie= categorie;
     }
 
     const [produits, total] = await Promise.all([
