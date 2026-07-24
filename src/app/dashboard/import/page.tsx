@@ -61,7 +61,7 @@ export default function ImportPage() {
             <li><strong>Catégorie</strong>, <strong>Unité</strong>, Stock minimum (optionnelles)</li>
           </ul>
           <p className="text-xs text-muted-foreground mt-2">
-            La feuille <strong>VENTES</strong> est optionnelle (import des ventes historiques).
+            Les feuilles <strong>ACHATS</strong> et <strong>VENTES</strong> sont optionnelles (import des mouvements historiques).
           </p>
 
           <div

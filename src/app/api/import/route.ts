@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
+import * as XLSX from "xlsx";
 
 const HEADER_ALIASES: Record<string, string[]> = {
   code: ["code produit", "code"],
@@ -30,6 +31,18 @@ function parseNumber(val: unknown): number {
   return isNaN(n) ? 0 : n;
 }
 
+function parseDate(val: unknown): Date {
+  if (val == null || val === "") return new Date();
+  if (typeof val === "number") {
+    const utcDays = Math.floor(val - 25569);
+    const utcValue = utcDays * 86400;
+    return new Date(utcValue * 1000);
+  }
+  const d = new Date(String(val));
+  if (isNaN(d.getTime())) return new Date();
+  return d;
+}
+
 export async function POST(request: NextRequest) {
   const auth = requireRole(request, ["RESPONSABLE"]);
   if ("error" in auth) return auth.error;
@@ -43,20 +56,13 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    let xlsx: typeof import("xlsx");
-    try {
-      xlsx = require("xlsx");
-    } catch {
-      return NextResponse.json({ error: "Module xlsx indisponible" }, { status: 500 });
-    }
-
-    const wb = xlsx.read(buffer, { type: "buffer" });
+    const wb = XLSX.read(buffer, { type: "buffer" });
 
     const results = { produits: 0, achats: 0, ventes: 0, errors: [] as string[] };
 
     // --- Import PRODUITS ---
     if (wb.SheetNames.includes("PRODUITS")) {
-      const sheet = xlsx.utils.sheet_to_json(wb.Sheets["PRODUITS"], { header: 1, defval: "" }) as unknown[][];
+      const sheet = XLSX.utils.sheet_to_json(wb.Sheets["PRODUITS"], { header: 1, defval: "" }) as unknown[][];
       const header = (sheet[0] || []).map(h => String(h).trim());
       const col = {
         code: findColumn(header, HEADER_ALIASES.code),
@@ -160,13 +166,100 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // --- Import VENTES ---
-    if (wb.SheetNames.includes("VENTES")) {
-      const sheet = xlsx.utils.sheet_to_json(wb.Sheets["VENTES"], { header: 1, defval: "" }) as unknown[][];
+    // --- Import ACHATS ---
+    if (wb.SheetNames.includes("ACHATS")) {
+      const sheet = XLSX.utils.sheet_to_json(wb.Sheets["ACHATS"], { header: 1, defval: "" }) as unknown[][];
       const header = (sheet[0] || []).map(h => String(h).trim());
       const colCode = findColumn(header, HEADER_ALIASES.code);
+      const colDate = header.findIndex(h => /date/i.test(h));
+      const colQty = header.findIndex(h => /quantité|quantite|qté|qte|quantite/i.test(h));
+      const colPrice = header.findIndex(h => /prix.*achat|prix/i.test(h));
+      const colDoc = header.findIndex(h => /numéro|numero|document|facture|fact/i.test(h));
+      const colFournisseur = header.findIndex(h => /fournisseur|fournisseur/i.test(h));
+      const colPaiement = header.findIndex(h => /paiement|mode.*paiement/i.test(h));
+
+      for (let i = 1; i < sheet.length; i++) {
+        const row = sheet[i];
+        const code = String(row[colCode] || "").trim();
+        const qty = parseInt(String(row[colQty] || "0"));
+        const price = parseNumber(row[colPrice]);
+
+        if (!code || qty <= 0) continue;
+
+        try {
+          const produit = await prisma.produit.findUnique({ where: { code } });
+          if (!produit) continue;
+
+          const total = qty * price;
+          const documentNumber = colDoc !== -1 ? String(row[colDoc] || "").trim() : null;
+          const date = colDate !== -1 ? parseDate(row[colDate]) : new Date();
+          const modePaiement = colPaiement !== -1 ? String(row[colPaiement] || "").trim() : null;
+          let fournisseurId: string | null = null;
+
+          if (colFournisseur !== -1) {
+            const fournisseurName = String(row[colFournisseur] || "").trim();
+            if (fournisseurName) {
+              const fournisseur = await prisma.fournisseur.findFirst({
+                where: { nom: { contains: fournisseurName } },
+              });
+              if (fournisseur) fournisseurId = fournisseur.id;
+            }
+          }
+
+          const ecart = price > Number(produit.prixAchatRef)
+            ? price - Number(produit.prixAchatRef)
+            : null;
+
+          await prisma.achat.create({
+            data: {
+              date,
+              numeroDocument: documentNumber,
+              fournisseurId,
+              produitId: produit.id,
+              quantite: qty,
+              prixUnitaire: price,
+              montantTotal: total,
+              modePaiement,
+              ecart,
+              alerte: ecart != null && ecart > 0,
+            },
+          });
+
+          const stock = await prisma.stock.findUnique({ where: { produitId: produit.id } });
+          if (stock) {
+            const newTotalAchats = stock.totalAchats + qty;
+            const newStockActuel = stock.stockInitial + newTotalAchats - stock.totalVentes;
+            await prisma.stock.update({
+              where: { produitId: produit.id },
+              data: {
+                totalAchats: newTotalAchats,
+                stockActuel: newStockActuel,
+                statutStock: newStockActuel <= produit.stockMin ? "Alerte" : "OK",
+                valeurAchat: Number(produit.prixAchatRef) * newStockActuel,
+                valeurVente: Number(produit.prixVenteRef) * newStockActuel,
+                margePotentielle: (Number(produit.prixVenteRef) - Number(produit.prixAchatRef)) * newStockActuel,
+              },
+            });
+          }
+
+          results.achats++;
+        } catch (err) {
+          results.errors.push(`Achat ${code}: ${err instanceof Error ? err.message : "Erreur"}`);
+        }
+      }
+    }
+
+    // --- Import VENTES ---
+    if (wb.SheetNames.includes("VENTES")) {
+      const sheet = XLSX.utils.sheet_to_json(wb.Sheets["VENTES"], { header: 1, defval: "" }) as unknown[][];
+      const header = (sheet[0] || []).map(h => String(h).trim());
+      const colCode = findColumn(header, HEADER_ALIASES.code);
+      const colDate = header.findIndex(h => /date/i.test(h));
       const colQty = header.findIndex(h => /quantité|quantite|qté|qte|quantite/i.test(h));
       const colPrice = header.findIndex(h => /prix.*vente|prix/i.test(h));
+      const colNumero = header.findIndex(h => /numéro|numero|vente|facture|fact/i.test(h));
+      const colClient = header.findIndex(h => /client|client/i.test(h));
+      const colPaiement = header.findIndex(h => /paiement|mode.*paiement/i.test(h));
 
       const codeIdx = colCode !== -1 ? colCode : 2;
       const qtyIdx = colQty !== -1 ? colQty : 5;
@@ -185,19 +278,35 @@ export async function POST(request: NextRequest) {
           if (!produit) continue;
 
           const total = qty * price;
+          const numeroVente = colNumero !== -1 ? String(row[colNumero] || "").trim() : `HIST-${code}-${i}`;
+          const date = colDate !== -1 ? parseDate(row[colDate]) : new Date();
+          const modePaiement = colPaiement !== -1 ? String(row[colPaiement] || "").trim() : null;
+          let clientId: string | null = null;
+
+          if (colClient !== -1) {
+            const clientName = String(row[colClient] || "").trim();
+            if (clientName) {
+              const client = await prisma.client.findFirst({
+                where: { nom: { contains: clientName } },
+              });
+              if (client) clientId = client.id;
+            }
+          }
+
           const ecart = price < Number(produit.prixVenteRef)
             ? Number(produit.prixVenteRef) - price
             : null;
 
           await prisma.vente.create({
             data: {
-              date: new Date("2024-01-01"),
-              numeroVente: `HIST-${code}`,
-              clientId: null,
+              date,
+              numeroVente,
+              clientId,
               produitId: produit.id,
               quantite: qty,
               prixUnitaire: price,
               montantTotal: total,
+              modePaiement,
               ecart,
               alerte: ecart != null && ecart > 0,
             },
@@ -229,7 +338,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Import terminé : ${results.produits} produit(s), ${results.ventes} vente(s) historique(s)`,
+      message: `Import terminé : ${results.produits} produit(s), ${results.achats} achat(s), ${results.ventes} vente(s) historique(s)`,
       results,
     });
   } catch (err) {

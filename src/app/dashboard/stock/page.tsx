@@ -64,10 +64,17 @@ export default function StockPage() {
         <div className="flex gap-2">
           <button
             className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 gap-2"
-            onClick={() => window.open("/api/export/stock")}
+            onClick={() => window.open("/api/export/stock?format=csv")}
           >
             <Download className="h-4 w-4" />
-            Exporter CSV
+            CSV
+          </button>
+          <button
+            className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 gap-2"
+            onClick={() => window.open("/api/export/stock?format=xlsx")}
+          >
+            <Download className="h-4 w-4" />
+            XLSX
           </button>
         </div>
       </div>

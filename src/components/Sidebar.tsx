@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, Package, ShoppingCart, TrendingUp,
-  ClipboardList, Building2, Users, Settings, Upload, LogOut, Menu, X,
+  ClipboardList, Building2, Users, Settings, Upload, LogOut, Menu, X, CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -17,6 +17,7 @@ const allNavItems = [
   { href: "/dashboard/stock", label: "Stock", icon: ClipboardList },
   { href: "/dashboard/fournisseurs", label: "Fournisseurs", icon: Building2 },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
+  { href: "/dashboard/recouvrement", label: "Recouvrement", icon: CreditCard },
   { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
  { href: "/dashboard/import", label: "Import", icon: Upload },
 ];

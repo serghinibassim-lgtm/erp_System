@@ -113,18 +113,19 @@ export default function VentesPage() {
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Prix unit.</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Total</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Alerte</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 w-20">Action</th>
               </tr>
             </thead>
             <tbody className="[&_tr:last-child]:border-0">
               {loading ? (
                 <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                  <td colSpan={8} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
+                  <td colSpan={9} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
                     Chargement...
                   </td>
                 </tr>
               ) : ventes.length === 0 ? (
                 <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                  <td colSpan={8} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
+                  <td colSpan={9} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
                     Aucune vente trouvée
                   </td>
                 </tr>
@@ -140,6 +141,16 @@ export default function VentesPage() {
                     <td className="p-3 align-middle whitespace-nowrap">{Number(s.montantTotal).toFixed(2)}</td>
                     <td className="p-3 align-middle whitespace-nowrap">
                       {s.alerte ? <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-red-300 text-secondary-foreground">Vérifier prix</span> : <span className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-green-200 text-secondary-foreground">OK</span>}
+                    </td>
+                    <td className="p-3 align-middle whitespace-nowrap">
+                      {s.numeroVente && (
+                        <button
+                          onClick={() => window.open(`/dashboard/ventes/facture?doc=${encodeURIComponent(s.numeroVente!)}`, "_blank")}
+                          className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-blue-100 hover:bg-blue-200 text-blue-800 cursor-pointer"
+                        >
+                          Facture
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

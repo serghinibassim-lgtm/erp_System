@@ -65,87 +65,102 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { date, numeroVente, clientId, produitId, quantite, prixUnitaire, montantTotal, modePaiement, observation } = body;
+    const { date, numeroVente, clientId, modePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
+
+    const items = lineItems || [{ produitId, quantite, prixUnitaire, montantTotal }];
+
+    if (!items || items.length === 0) {
+      return NextResponse.json({ error: "Aucun produit fourni", errors: { lineItems: "Ajoutez au moins un produit" } }, { status: 400 });
+    }
 
     const errors: Record<string, string> = {};
-    if (!produitId) errors.produitId = "Le produit est requis";
-    if (!quantite || isNaN(Number(quantite)) || Number(quantite) <= 0) errors.quantite = "La quantité doit être > 0";
-    if (prixUnitaire == null || isNaN(Number(prixUnitaire))) errors.prixUnitaire = "Le prix unitaire est requis";
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.produitId) errors[`lineItems.${i}.produitId`] = "Le produit est requis";
+      if (!item.quantite || isNaN(Number(item.quantite)) || Number(item.quantite) <= 0) errors[`lineItems.${i}.quantite`] = "La quantité doit être > 0";
+      if (item.prixUnitaire == null || isNaN(Number(item.prixUnitaire))) errors[`lineItems.${i}.prixUnitaire`] = "Le prix unitaire est requis";
+    }
 
     if (Object.keys(errors).length > 0) {
       return NextResponse.json({ error: "Validation échouée", errors }, { status: 400 });
     }
 
-    const produit = await prisma.produit.findUnique({
-      where: { id: produitId },
-      include: { stock: true },
-    });
-    if (!produit) {
-      return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
-    }
+    const ventes: unknown[] = [];
 
-    const stockActuel = produit.stock?.stockActuel ?? 0;
-    if (quantite > stockActuel) {
-      return NextResponse.json({
-        error: "Stock insuffisant",
-        errors: { quantite: `Stock disponible: ${stockActuel}` },
-      }, { status: 400 });
-    }
-
-    const qty = parseInt(quantite);
-    const price = parseFloat(prixUnitaire);
-    const total = montantTotal != null ? parseFloat(montantTotal) : qty * price;
-
-    const ecart = price < Number(produit.prixVenteRef)
-      ? Number(produit.prixVenteRef) - price
-      : null;
-
-    const thresholdParam = await prisma.parametre.findUnique({ where: { cle: "sale_alert_threshold" } });
-    const threshold = thresholdParam ? parseFloat(thresholdParam.valeur) : 0;
-    const alerte = ecart != null && ecart > threshold;
-
-    const vente = await prisma.$transaction(async (tx) => {
-      const newVente = await tx.vente.create({
-        data: {
-          date: date ? new Date(date) : new Date(),
-          numeroVente: numeroVente || null,
-          clientId: clientId || null,
-          produitId,
-          quantite: qty,
-          prixUnitaire: price,
-          montantTotal: total,
-          modePaiement: modePaiement || null,
-          observation: observation || null,
-          ecart: ecart || null,
-          alerte,
-        },
+    for (const item of items) {
+      const produit = await prisma.produit.findUnique({
+        where: { id: item.produitId },
+        include: { stock: true },
       });
-
-      const stock = await tx.stock.findUnique({ where: { produitId } });
-      if (stock) {
-        const newTotalVentes = stock.totalVentes + qty;
-        const newStockActuel = stock.stockInitial + stock.totalAchats - newTotalVentes;
-        const newValeurAchat = Number(produit.prixAchatRef) * newStockActuel;
-        const newValeurVente = Number(produit.prixVenteRef) * newStockActuel;
-        const newMargePotentielle = newValeurVente - newValeurAchat;
-
-        await tx.stock.update({
-          where: { produitId },
-          data: {
-            totalVentes: newTotalVentes,
-            stockActuel: newStockActuel,
-            statutStock: newStockActuel <= produit.stockMin ? "Alerte" : "OK",
-            valeurAchat: newValeurAchat,
-            valeurVente: newValeurVente,
-            margePotentielle: newMargePotentielle,
-          },
-        });
+      if (!produit) {
+        return NextResponse.json({ error: `Produit introuvable: ${item.produitId}` }, { status: 404 });
       }
 
-      return newVente;
-    });
+      const stockActuel = produit.stock?.stockActuel ?? 0;
+      if (item.quantite > stockActuel) {
+        return NextResponse.json({
+          error: `Stock insuffisant pour ${produit.code}`,
+          errors: { [`lineItems.${items.indexOf(item)}.quantite`]: `Stock disponible: ${stockActuel}` },
+        }, { status: 400 });
+      }
 
-    return NextResponse.json({ vente }, { status: 201 });
+      const qty = parseInt(item.quantite);
+      const price = parseFloat(item.prixUnitaire);
+      const total = item.montantTotal != null ? parseFloat(item.montantTotal) : qty * price;
+
+      const ecart = price < Number(produit.prixVenteRef)
+        ? Number(produit.prixVenteRef) - price
+        : null;
+
+      const thresholdParam = await prisma.parametre.findUnique({ where: { cle: "sale_alert_threshold" } });
+      const threshold = thresholdParam ? parseFloat(thresholdParam.valeur) : 0;
+      const alerte = ecart != null && ecart > threshold;
+
+      const vente = await prisma.$transaction(async (tx) => {
+        const newVente = await tx.vente.create({
+          data: {
+            date: date ? new Date(date) : new Date(),
+            numeroVente: numeroVente || null,
+            clientId: clientId || null,
+            produitId: item.produitId,
+            quantite: qty,
+            prixUnitaire: price,
+            montantTotal: total,
+            modePaiement: modePaiement || null,
+            observation: observation || null,
+            ecart: ecart || null,
+            alerte,
+          },
+        });
+
+        const stock = await tx.stock.findUnique({ where: { produitId: item.produitId } });
+        if (stock) {
+          const newTotalVentes = stock.totalVentes + qty;
+          const newStockActuel = stock.stockInitial + stock.totalAchats - newTotalVentes;
+          const newValeurAchat = Number(produit.prixAchatRef) * newStockActuel;
+          const newValeurVente = Number(produit.prixVenteRef) * newStockActuel;
+          const newMargePotentielle = newValeurVente - newValeurAchat;
+
+          await tx.stock.update({
+            where: { produitId: item.produitId },
+            data: {
+              totalVentes: newTotalVentes,
+              stockActuel: newStockActuel,
+              statutStock: newStockActuel <= produit.stockMin ? "Alerte" : "OK",
+              valeurAchat: newValeurAchat,
+              valeurVente: newValeurVente,
+              margePotentielle: newMargePotentielle,
+            },
+          });
+        }
+
+        return newVente;
+      });
+
+      ventes.push(vente);
+    }
+
+    return NextResponse.json({ ventes, count: ventes.length }, { status: 201 });
   } catch (err) {
     console.error("Ventes POST error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

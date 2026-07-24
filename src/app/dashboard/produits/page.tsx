@@ -107,13 +107,16 @@ export default function ProduitsPage() {
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <input
-                    placeholder="Rechercher par code ou désignation..."
-                    value={recherche}
-                    onChange={(e) => setRecherche(e.target.value)}
-                    className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 w-full sm:max-w-sm"
-                />
-                <div>
+
+                  <input
+                      placeholder="Rechercher par code ou désignation..."
+                      value={recherche}
+                      onChange={(e) => setRecherche(e.target.value)}
+                      className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 w-full sm:max-w-sm"
+                  />
+
+                <div className={'flex flex-col gap-4 sm:flex-row sm:items-center'}>
+                    <label>filtre:</label>
                     <select name="dddd" id="ss"
                             onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                                 setFiltrParCtegories(e.target.value);
@@ -123,7 +126,7 @@ export default function ProduitsPage() {
                             className={'flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm border-input'}
 
                     >
-                        <option value="">Sélectionner une catégorie</option>
+                        <option value="">toute les  catégorie</option>
                         {
                             categorie?.map(c => (
                                 <option key={categorie.indexOf(c)} value={c}>{c}</option>
@@ -186,7 +189,7 @@ export default function ProduitsPage() {
                                 <td>
                                     <button onClick={() => window.location.href = `/dashboard/produits/${produit.id}`}
                                             className="inline-flex h-6 w-fit items-center rounded-full border border-transparent px-2.5 py-0.5 text-sm font-medium whitespace-nowrap bg-amber-100 hover:bg-amber-200 cursor-pointer">
-                                        modifier
+                                        plus
                                     </button>
                                 </td>
                             </tr>
