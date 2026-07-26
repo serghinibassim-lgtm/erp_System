@@ -74,6 +74,9 @@ export default function NouvelleVentePage() {
       if (field === "produitId" && value) {
         const produit = produits.find(p => p.id === value);
         if (produit) updated.prixUnitaire = String(Number(produit.prixVenteRef));
+        if (updated.quantite && updated.prixUnitaire) {
+          updated.montantTotal = String((parseInt(updated.quantite) || 0) * (parseFloat(updated.prixUnitaire) || 0));
+        }
       }
       if ((field === "quantite" || field === "prixUnitaire") && updated.quantite && updated.prixUnitaire) {
         updated.montantTotal = String((parseInt(updated.quantite) || 0) * (parseFloat(updated.prixUnitaire) || 0));
@@ -141,7 +144,7 @@ export default function NouvelleVentePage() {
           <div className="flex flex-col gap-3">
             <button
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium"
-              onClick={() => window.open(`/dashboard/ventes/facture?doc=${createdDocNum}`, "_blank")}
+              onClick={() => window.open(`/dashboard/ventes/facture?doc=${createdDocNum}&download=true`, "_blank")}
             >
               <Printer className="h-4 w-4" />
               Télécharger la facture PDF
@@ -238,18 +241,20 @@ export default function NouvelleVentePage() {
                     {lineItems.map((li, idx) => (
                       <tr key={li.key} className="border-b border-border/60">
                         <td className="p-1">
-                          <select
-                            value={li.produitId}
-                            onChange={(e) => updateLine(li.key, "produitId", e.target.value)}
-                            className={`flex h-8 w-full rounded border bg-transparent px-2 text-sm ${fieldErrors[`lineItems.${idx}.produitId`] ? "border-red-500" : "border-input"}`}
-                          >
-                            <option value="">Choisir...</option>
-                            {produits.map(p => (
-                              <option key={p.id} value={p.id}>
-                                {p.code} - {p.designation} (stock: {p.stock?.stockActuel ?? 0})
-                              </option>
-                            ))}
-                          </select>
+                            <select
+                              value={li.produitId}
+                              onChange={(e) => updateLine(li.key, "produitId", e.target.value)}
+                              className={`flex h-8 w-full rounded border bg-transparent px-2 text-sm ${fieldErrors[`lineItems.${idx}.produitId`] ? "border-red-500" : "border-input"}`}
+                            >
+                              <option value="">Choisir...</option>
+                              {produits.filter(p =>
+                                p.id === li.produitId || !lineItems.some(other => other.key !== li.key && other.produitId === p.id)
+                              ).map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.code} - {p.designation} (stock: {p.stock?.stockActuel ?? 0})
+                                </option>
+                              ))}
+                            </select>
                           {li.produitId && (
                             <p className="text-xs text-muted-foreground mt-0.5">Dispo: {getStock(li.produitId)}</p>
                           )}

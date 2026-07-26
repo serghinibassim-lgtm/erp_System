@@ -49,18 +49,20 @@ model Achat {
 }
 
 model Vente {
-  id            String    @id @default(cuid())
-  date          DateTime
-  numeroVente   String?   @map("numero_vente")
-  clientId      String?   @map("client_id")
-  produitId     String    @map("produit_id")
-  quantite      Int
-  prixUnitaire  Decimal   @map("prix_unitaire")
-  montantTotal  Decimal   @map("montant_total")
-  modePaiement  String?   @map("mode_paiement")
-  observation   String?
-  ecart         Decimal?
-  alerte        Boolean?
+  id                  String    @id @default(cuid())
+  date                DateTime
+  numeroVente         String?   @map("numero_vente")
+  clientId            String?   @map("client_id")
+  produitId           String    @map("produit_id")
+  quantite            Int
+  prixUnitaire        Decimal   @map("prix_unitaire")
+  montantTotal        Decimal   @map("montant_total")
+  modePaiement        String?   @map("mode_paiement")
+  dateLimitePaiement  DateTime? @map("date_limite_paiement")
+  paye                Boolean   @default(false)
+  observation         String?
+  ecart               Decimal?
+  alerte              Boolean?
 
   client  Client?  @relation(fields: [clientId], references: [id])
   produit Produit  @relation(fields: [produitId], references: [id])
