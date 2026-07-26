@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { date, numeroVente, clientId, modePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
+    const { date, numeroVente, clientId, modePaiement, dateLimitePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
 
     const items = lineItems || [{ produitId, quantite, prixUnitaire, montantTotal }];
 
@@ -127,6 +127,7 @@ export async function POST(request: Request) {
             prixUnitaire: price,
             montantTotal: total,
             modePaiement: modePaiement || null,
+            dateLimitePaiement: dateLimitePaiement ? new Date(dateLimitePaiement) : null,
             observation: observation || null,
             ecart: ecart || null,
             alerte,

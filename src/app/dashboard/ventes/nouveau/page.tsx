@@ -33,6 +33,7 @@ export default function NouvelleVentePage() {
   const [numeroVente, setNumeroVente] = useState("");
   const [clientId, setClientId] = useState("");
   const [modePaiement, setModePaiement] = useState("");
+  const [dateLimitePaiement, setDateLimitePaiement] = useState("");
   const [observation, setObservation] = useState("");
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { key: crypto.randomUUID?.() || "1", produitId: "", quantite: "1", prixUnitaire: "", montantTotal: "" },
@@ -108,6 +109,7 @@ export default function NouvelleVentePage() {
           numeroVente: numeroVente || undefined,
           clientId: clientId || undefined,
           modePaiement: modePaiement || undefined,
+          dateLimitePaiement: modePaiement === "Crédit" && dateLimitePaiement ? new Date(dateLimitePaiement).toISOString() : undefined,
           observation: observation || undefined,
           lineItems: lineItems.map(li => ({
             produitId: li.produitId,
@@ -163,6 +165,7 @@ export default function NouvelleVentePage() {
                 setNumeroVente("");
                 setClientId("");
                 setModePaiement("");
+                setDateLimitePaiement("");
                 setObservation("");
                 setDate(new Date().toISOString().slice(0, 10));
               }}
@@ -213,7 +216,7 @@ export default function NouvelleVentePage() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement</label>
-                <select id="modePaiement" value={modePaiement} onChange={(e) => setModePaiement(e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
+                <select id="modePaiement" value={modePaiement} onChange={(e) => { setModePaiement(e.target.value); if (e.target.value !== "Crédit") setDateLimitePaiement(""); }} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
                   <option value="">Sélectionner</option>
                   <option value="Espèces">Espèces</option>
                   <option value="Chèque">Chèque</option>
@@ -221,6 +224,12 @@ export default function NouvelleVentePage() {
                   <option value="Carte">Carte</option>
                   <option value="Crédit">Crédit</option>
                 </select>
+              {modePaiement === "Crédit" && (
+                <div className="mt-2 space-y-2">
+                  <label htmlFor="dateLimitePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Date limite de paiement <span className="text-destructive">*</span></label>
+                  <input id="dateLimitePaiement" type="date" value={dateLimitePaiement} onChange={(e) => setDateLimitePaiement(e.target.value)} required className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
+                </div>
+              )}
               </div>
             </div>
 

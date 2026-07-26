@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const fournisseur = await prisma.fournisseur.create({
-      data: { code, nom, telephone: telephone || null, adresse: adresse || null, ice: ice || null },
+      data: { code, nom, telephone, adresse: adresse || null, ice: ice || null },
     });
 
     return NextResponse.json({ fournisseur }, { status: 201 });

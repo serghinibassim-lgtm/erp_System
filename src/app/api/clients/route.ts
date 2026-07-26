@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await prisma.client.create({
-      data: { code, nom, telephone: telephone || null, adresse: adresse || null },
+      data: { code, nom, telephone, adresse: adresse || null },
     });
 
     return NextResponse.json({ client }, { status: 201 });

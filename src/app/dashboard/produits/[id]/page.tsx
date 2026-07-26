@@ -56,22 +56,6 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [unites, setUnites] = useState<string[]>([]);
-
-  useEffect(() => {
-    fetch("/api/parametres")
-      .then(r => r.json())
-      .then(data => {
-        if (data.parametres) {
-          const cats = data.parametres.find((p: {cle: string}) => p.cle === "categories");
-          const uns = data.parametres.find((p: {cle: string}) => p.cle === "unites");
-          if (cats?.valeur) setCategories(cats.valeur.split("\n").filter((s: string) => s.trim()));
-          if (uns?.valeur) setUnites(uns.valeur.split("\n").filter((s: string) => s.trim()));
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const fetchProduit = useCallback(async () => {
     setLoading(true);
@@ -223,67 +207,12 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
             <h3 className="text-lg font-semibold leading-snug">Informations</h3>
           </div>
           <div className="px-4 pb-4 space-y-4">
-            {editing ? (
-              <>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Code <span className="text-destructive">*</span></label>
-                  <input
-                    name="code"
-                    value={form.code}
-                    onChange={handleChange}
-                    className={`h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.code ? "border-red-500" : ""}`}
-                  />
-                  {fieldErrors.code && <p className="text-sm text-red-500">{fieldErrors.code}</p>}
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Désignation <span className="text-destructive">*</span></label>
-                  <input
-                    name="designation"
-                    value={form.designation}
-                    onChange={handleChange}
-                    className={`h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.designation ? "border-red-500" : ""}`}
-                  />
-                  {fieldErrors.designation && <p className="text-sm text-red-500">{fieldErrors.designation}</p>}
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Catégorie <span className="text-destructive">*</span></label>
-                  <select
-                    name="categorie"
-                    value={form.categorie}
-                    onChange={handleChange}
-                    className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.categorie ? "border-red-500" : "border-input"}`}
-                  >
-                    <option value="">Sélectionner une catégorie</option>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  {fieldErrors.categorie && <p className="text-sm text-red-500">{fieldErrors.categorie}</p>}
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Unité <span className="text-destructive">*</span></label>
-                  <select
-                    name="unite"
-                    value={form.unite}
-                    onChange={handleChange}
-                    className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.unite ? "border-red-500" : "border-input"}`}
-                  >
-                    <option value="">Sélectionner une unité</option>
-                    {unites.map(u => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
-                  {fieldErrors.unite && <p className="text-sm text-red-500">{fieldErrors.unite}</p>}
-                </div>
-              </>
-            ) : (
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between"><dt className="text-muted-foreground">Code</dt><dd className="font-medium">{produit.code}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Désignation</dt><dd className="font-medium">{produit.designation}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Catégorie</dt><dd className="font-medium">{produit.categorie}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Unité</dt><dd className="font-medium">{produit.unite}</dd></div>
-              </dl>
-            )}
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between"><dt className="text-muted-foreground">Code</dt><dd className="font-medium">{produit.code}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Désignation</dt><dd className="font-medium">{produit.designation}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Catégorie</dt><dd className="font-medium">{produit.categorie}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Unité</dt><dd className="font-medium">{produit.unite}</dd></div>
+            </dl>
           </div>
         </div>
 
@@ -311,18 +240,16 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
                     {fieldErrors[field] && <p className="text-sm text-red-500">{fieldErrors[field]}</p>}
                   </div>
                 ))}
-                {form.raisonPrix && (
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Raison du changement de prix</label>
-                    <input
-                      name="raisonPrix"
-                      value={form.raisonPrix}
-                      onChange={handleChange}
-                      placeholder="Optionnel"
-                      className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                )}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Raison du changement</label>
+                  <input
+                    name="raisonPrix"
+                    value={form.raisonPrix}
+                    onChange={handleChange}
+                    placeholder="Optionnel"
+                    className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </div>
               </>
             ) : (
               <dl className="space-y-2 text-sm">

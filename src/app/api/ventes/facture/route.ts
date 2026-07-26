@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
     }
 
     const total = ventes.reduce((sum, v) => sum + Number(v.montantTotal), 0);
+    const allPaid = ventes.every((v) => v.paye);
+    const dateLimite = ventes.find((v) => v.dateLimitePaiement)?.dateLimitePaiement || null;
+    const datePaiement = ventes.find((v) => v.datePaiement)?.datePaiement || null;
 
     return NextResponse.json({
       success: true,
@@ -32,6 +35,9 @@ export async function GET(request: NextRequest) {
         client: ventes[0].client,
         modePaiement: ventes[0].modePaiement,
         observation: ventes[0].observation,
+        paye: allPaid,
+        dateLimitePaiement: dateLimite,
+        datePaiement,
       },
       items: ventes.map(v => ({
         id: v.id,
@@ -39,6 +45,7 @@ export async function GET(request: NextRequest) {
         quantite: v.quantite,
         prixUnitaire: Number(v.prixUnitaire),
         montantTotal: Number(v.montantTotal),
+        paye: v.paye,
       })),
       total,
     });

@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
 
 interface Supplier {
   id: string;
   code: string;
   nom: string;
-  telephone: string | null;
+  telephone: string;
   adresse: string | null;
   ice: string | null;
 }
@@ -29,6 +29,7 @@ export default function SuppliersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -57,7 +58,7 @@ export default function SuppliersPage() {
 
   const openEdit = (s: Supplier) => {
     setEditingId(s.id);
-    setForm({ code: s.code, nom: s.nom, telephone: s.telephone || "", adresse: s.adresse || "", ice: s.ice || "" });
+    setForm({ code: s.code, nom: s.nom, telephone: s.telephone, adresse: s.adresse || "", ice: s.ice || "" });
     setOpen(true);
   };
 
@@ -79,6 +80,12 @@ export default function SuppliersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
+    const phoneRaw = form.telephone.replace(/[\s\-]/g, "");
+    if (phoneRaw && !/^0[5-7]\d{8}$/.test(phoneRaw)) {
+      setFieldErrors({ telephone: "Numéro invalide (ex: 0612345678)" });
+      return;
+    }
     setSaving(true);
     try {
       const url = editingId ? `/api/fournisseurs/${editingId}` : "/api/fournisseurs";
@@ -86,7 +93,7 @@ export default function SuppliersPage() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, telephone: phoneRaw }),
       });
       if (res.ok) {
         setOpen(false);
@@ -129,9 +136,9 @@ export default function SuppliersPage() {
             <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Code</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Nom</th>
-              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Téléphone</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Téléphone <img src="/whatsapp.svg" alt="WhatsApp" className="size-3.5 inline ml-1" /></th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Adresse</th>
-              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">ICE</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Identifiant</th>
               {isResponsable && <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 w-24">Actions</th>}
             </tr>
           </thead>
@@ -149,25 +156,28 @@ export default function SuppliersPage() {
                 <tr key={s.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                   <td className="p-3 align-middle whitespace-nowrap font-medium">{s.code}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.nom}</td>
-                  <td className="p-3 align-middle whitespace-nowrap">{s.telephone || "-"}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">
+                    <a href={`https://wa.me/${s.telephone.replace(/^0/, "212")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-green-600 hover:underline">
+                      <img src="/whatsapp.svg" alt="WhatsApp" className="size-4" />
+                      {s.telephone}
+                    </a>
+                  </td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.adresse || "-"}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.ice || "-"}</td>
                   {isResponsable && (
                     <td className="p-3 align-middle whitespace-nowrap">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1.5">
                         <button
-                          className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
+                          className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted px-2 h-7 text-xs font-medium whitespace-nowrap transition-all"
                           onClick={() => openEdit(s)}
-                          title="Modifier"
                         >
-                          <Pencil className="h-5 w-5" />
+                          Modifier
                         </button>
                         <button
-                          className="size-6 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-5 [&_svg]:shrink-0"
+                          className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-background text-red-600 hover:bg-red-50 px-2 h-7 text-xs font-medium whitespace-nowrap transition-all"
                           onClick={() => setDeleteTarget(s)}
-                          title="Supprimer"
                         >
-                          <Trash2 className="h-5 w-5 text-red-500" />
+                          Supprimer
                         </button>
                       </div>
                     </td>
@@ -188,40 +198,46 @@ export default function SuppliersPage() {
             </div>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="code">Code</label>
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="code">Code <span className="text-destructive">*</span></label>
                 <input
                   id="code"
                   value={form.code}
-                  onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))}
+                  onChange={(e) => { setForm(p => ({ ...p, code: e.target.value })); setFieldErrors({}); }}
+                  placeholder="FRN-001"
                   required
                   className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="nom">Nom</label>
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="nom">Nom <span className="text-destructive">*</span></label>
                 <input
                   id="nom"
                   value={form.nom}
-                  onChange={(e) => setForm(p => ({ ...p, nom: e.target.value }))}
+                  onChange={(e) => { setForm(p => ({ ...p, nom: e.target.value })); setFieldErrors({}); }}
+                  placeholder="Nom complet"
                   required
                   className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="telephone">Téléphone</label>
+                <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="telephone">Téléphone <span className="text-destructive">*</span></label>
                 <input
                   id="telephone"
                   value={form.telephone}
-                  onChange={(e) => setForm(p => ({ ...p, telephone: e.target.value }))}
-                  className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                  onChange={(e) => { setForm(p => ({ ...p, telephone: e.target.value })); setFieldErrors({}); }}
+                  placeholder="0612345678"
+                  required
+                  className={`h-9 w-full min-w-0 rounded-lg border bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${fieldErrors.telephone ? "border-red-500" : "border-input"}`}
                 />
+                {fieldErrors.telephone && <p className="text-sm text-red-500">{fieldErrors.telephone}</p>}
               </div>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-base leading-none font-medium select-none" htmlFor="adresse">Adresse</label>
                 <input
                   id="adresse"
                   value={form.adresse}
-                  onChange={(e) => setForm(p => ({ ...p, adresse: e.target.value }))}
+                  onChange={(e) => { setForm(p => ({ ...p, adresse: e.target.value })); setFieldErrors({}); }}
+                  placeholder="Adresse complète"
                   className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
@@ -231,6 +247,7 @@ export default function SuppliersPage() {
                   id="ice"
                   value={form.ice}
                   onChange={(e) => setForm(p => ({ ...p, ice: e.target.value }))}
+                  placeholder="Numéro ICE"
                   className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>

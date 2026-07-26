@@ -121,18 +121,16 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => {
-          const Icon = card.icon;
+          const valueColor = card.title === "Alertes stock"
+            ? "text-red-500"
+            : card.title === "Chiffre d'Affaires" || card.title === "Marge potentielle"
+              ? "text-emerald-500"
+              : "text-foreground";
           return (
-            <div key={card.title} className="group relative flex flex-col overflow-hidden rounded-2xl bg-card p-6 text-card-foreground shadow-sm ring-1 ring-border transition-all hover:shadow-lg hover:-translate-y-1">
-              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-transparent to-black/5 dark:to-white/5 blur-2xl group-hover:bg-primary/10 transition-colors" />
-              <div className="relative flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{card.title}</h3>
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-sm ${card.bg}`}>
-                  <Icon className={`h-6 w-6 ${card.color}`} />
-                </div>
-              </div>
-              <div className="relative mt-4 flex flex-col gap-1">
-                <p className="text-3xl font-extrabold tracking-tight">{card.value}</p>
+            <div key={card.title} className="flex flex-col rounded-2xl bg-card p-6 text-card-foreground shadow-sm ring-1 ring-border">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{card.title}</h3>
+              <div className="mt-4 flex flex-col gap-1">
+                <p className={`text-3xl font-extrabold tracking-tight ${valueColor}`}>{card.value}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {card.trend && (
                     <span className={`inline-flex items-center text-xs font-semibold ${card.trend.color}`}>

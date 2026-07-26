@@ -60,6 +60,7 @@ model Vente {
   modePaiement        String?   @map("mode_paiement")
   dateLimitePaiement  DateTime? @map("date_limite_paiement")
   paye                Boolean   @default(false)
+  datePaiement        DateTime? @map("date_paiement")
   observation         String?
   ecart               Decimal?
   alerte              Boolean?
@@ -88,10 +89,10 @@ model Stock {
 }
 
 model Fournisseur {
-  id        String  @id @default(cuid())
-  code      String  @unique
+  id        String @id @default(cuid())
+  code      String @unique
   nom       String
-  telephone String?
+  telephone String
   adresse   String?
   ice       String?
 
@@ -104,7 +105,7 @@ model Client {
   id        String @id @default(cuid())
   code      String @unique
   nom       String
-  telephone String?
+  telephone String
   adresse   String?
 
   ventes Vente[]

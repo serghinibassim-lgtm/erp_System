@@ -4,8 +4,13 @@ import {AuthProvider} from "@/context/AuthContext";
 
 
 export const metadata: Metadata = {
-  title: "ARP Gestion Magasin",
+  title: "ERP Gestion Magasin",
   description: "Application de gestion de stock et de magasin",
+  icons:{
+    icon:"/erp.png",
+    shortcut:"/erp.png"
+
+  }
 };
 
 export default function RootLayout({

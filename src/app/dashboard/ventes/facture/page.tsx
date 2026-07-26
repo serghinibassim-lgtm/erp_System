@@ -12,6 +12,7 @@ interface FactureItem {
   quantite: number;
   prixUnitaire: number;
   montantTotal: number;
+  paye: boolean;
 }
 
 interface DocumentInfo {
@@ -20,6 +21,9 @@ interface DocumentInfo {
   client: { nom: string; telephone: string | null; adresse: string | null } | null;
   modePaiement: string | null;
   observation: string | null;
+  paye: boolean;
+  dateLimitePaiement: string | null;
+  datePaiement: string | null;
 }
 
 function FactureVenteContent() {
@@ -101,11 +105,25 @@ function FactureVenteContent() {
     pdf.text(`Total: ${total.toFixed(2)} DH`, 196, finalY + 10, { align: "right" });
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
+    let infoY = finalY + 18;
     if (document.modePaiement) {
-      pdf.text(`Mode: ${document.modePaiement}`, 196, finalY + 18, { align: "right" });
+      pdf.text(`Mode: ${document.modePaiement}`, 196, infoY, { align: "right" });
+      infoY += 8;
+    }
+    if (document.modePaiement === "Crédit") {
+      pdf.text(`Paiement: ${document.paye ? "Payé" : "Non payé"}`, 14, infoY);
+      if (document.dateLimitePaiement) {
+        const limite = new Date(document.dateLimitePaiement).toLocaleDateString("fr-FR");
+        pdf.text(`Date limite: ${limite}`, 14, infoY + 6);
+      }
+      if (document.datePaiement) {
+        const payeeLe = new Date(document.datePaiement).toLocaleDateString("fr-FR");
+        pdf.text(`Payée le: ${payeeLe}`, 14, infoY + 12);
+      }
+      infoY += 18;
     }
     if (document.observation) {
-      pdf.text(`Observation: ${document.observation}`, 14, finalY + 18);
+      pdf.text(`Observation: ${document.observation}`, 14, infoY);
     }
 
     pdf.save(`facture-vente-${document.numeroVente}.pdf`);
@@ -197,6 +215,30 @@ function FactureVenteContent() {
             )}
           </div>
         </div>
+
+        {document.modePaiement === "Crédit" && (
+          <div className={`mt-4 p-3 rounded-lg text-sm ${document.paye ? "bg-green-50" : "bg-red-50"}`}>
+            <span className="font-semibold">Paiement: </span>
+            {document.paye ? (
+              <span className="text-green-700 font-medium">Payé</span>
+            ) : (
+              <span className="text-red-600 font-medium">Non payé</span>
+            )}
+            {document.dateLimitePaiement && (
+              <span className="ml-4">
+                Date limite: <strong>{new Date(document.dateLimitePaiement).toLocaleDateString("fr-FR")}</strong>
+                {!document.paye && new Date(document.dateLimitePaiement) < new Date() && (
+                  <span className="ml-2 text-red-600 font-medium">(Dépassée)</span>
+                )}
+              </span>
+            )}
+            {document.datePaiement && (
+              <span className="ml-4">
+                Payée le: <strong>{new Date(document.datePaiement).toLocaleDateString("fr-FR")}</strong>
+              </span>
+            )}
+          </div>
+        )}
 
         {document.observation && (
           <div className="mt-6 p-3 bg-muted/20 rounded-lg text-sm">

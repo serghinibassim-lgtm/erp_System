@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Upload, Plus, Pencil, Trash2 } from "lucide-react";
+import { Upload, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface Parameter {
@@ -213,27 +213,27 @@ export default function ParametersPage() {
           </div>
 
           <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
-            <div className="flex flex-row items-center justify-between gap-1 px-4 pt-4">
+            <div className="flex flex-row items-center justify-between px-4 pt-4">
               <h2 className="text-lg font-semibold leading-snug">Catégories</h2>
-              <button onClick={() => openAddDialog("categories")} className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-8 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4">
+              <button onClick={() => openAddDialog("categories")} className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-8 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50">
                 <Plus className="h-4 w-4 mr-1" />
                 Ajouter
               </button>
             </div>
-            <div className="px-4 pb-4">
+            <div className="p-4 space-y-3">
               {getItems("categories").length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune catégorie</p>
+                <p className="text-muted-foreground">Aucune catégorie</p>
               ) : (
                 <ul className="space-y-2">
                   {getItems("categories").map((item, i) => (
-                    <li key={i} className="flex items-center justify-between rounded-lg border px-3 py-2">
-                      <span className="text-sm">{item}</span>
-                      <div className="flex gap-1">
-                        <button onClick={() => openEditDialog("categories", i, item)} className="size-7 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-4 [&_svg]:shrink-0">
-                          <Pencil className="h-4 w-4" />
+                    <li key={i} className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+                      <span className="text-base">{item}</span>
+                      <div className="flex gap-1.5">
+                        <button onClick={() => openEditDialog("categories", i, item)} className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted px-2.5 h-7 text-xs font-medium whitespace-nowrap transition-all">
+                          Modifier
                         </button>
-                        <button onClick={() => handleDelete("categories", i)} className="size-7 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-4 [&_svg]:shrink-0">
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                        <button onClick={() => handleDelete("categories", i)} className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-background text-red-600 hover:bg-red-50 px-2.5 h-7 text-xs font-medium whitespace-nowrap transition-all">
+                          Supprimer
                         </button>
                       </div>
                     </li>
@@ -244,27 +244,27 @@ export default function ParametersPage() {
           </div>
 
           <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
-            <div className="flex flex-row items-center justify-between gap-1 px-4 pt-4">
+            <div className="flex flex-row items-center justify-between px-4 pt-4">
               <h2 className="text-lg font-semibold leading-snug">Unités</h2>
-              <button onClick={() => openAddDialog("unites")} className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-8 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4">
+              <button onClick={() => openAddDialog("unites")} className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-8 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50">
                 <Plus className="h-4 w-4 mr-1" />
                 Ajouter
               </button>
             </div>
-            <div className="px-4 pb-4">
+            <div className="p-4 space-y-3">
               {getItems("unites").length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune unité</p>
+                <p className="text-muted-foreground">Aucune unité</p>
               ) : (
                 <ul className="space-y-2">
                   {getItems("unites").map((item, i) => (
-                    <li key={i} className="flex items-center justify-between rounded-lg border px-3 py-2">
-                      <span className="text-sm">{item}</span>
-                      <div className="flex gap-1">
-                        <button onClick={() => openEditDialog("unites", i, item)} className="size-7 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-4 [&_svg]:shrink-0">
-                          <Pencil className="h-4 w-4" />
+                    <li key={i} className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+                      <span className="text-base">{item}</span>
+                      <div className="flex gap-1.5">
+                        <button onClick={() => openEditDialog("unites", i, item)} className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted px-2.5 h-7 text-xs font-medium whitespace-nowrap transition-all">
+                          Modifier
                         </button>
-                        <button onClick={() => handleDelete("unites", i)} className="size-7 inline-flex items-center justify-center rounded-lg hover:bg-muted [&_svg]:size-4 [&_svg]:shrink-0">
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                        <button onClick={() => handleDelete("unites", i)} className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-background text-red-600 hover:bg-red-50 px-2.5 h-7 text-xs font-medium whitespace-nowrap transition-all">
+                          Supprimer
                         </button>
                       </div>
                     </li>

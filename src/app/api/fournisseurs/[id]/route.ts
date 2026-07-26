@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data: {
         ...(body.code !== undefined && { code: body.code }),
         ...(body.nom !== undefined && { nom: body.nom }),
-        ...(body.telephone !== undefined && { telephone: body.telephone || null }),
+        ...(body.telephone !== undefined && { telephone: body.telephone }),
         ...(body.adresse !== undefined && { adresse: body.adresse || null }),
         ...(body.ice !== undefined && { ice: body.ice || null }),
       },
