@@ -6,13 +6,13 @@ import * as XLSX from "xlsx";
 
 const HEADER_ALIASES: Record<string, string[]> = {
   code: ["code produit", "code"],
-  designation: ["désignation", "designation", "produit"],
-  categorie: ["catégorie", "categorie", "category"],
-  unite: ["unité de mesure", "unité", "unite", "unite de mesure"],
-  prixAchat: ["prix achat référence", "prix achat source", "prix achat ref", "prix achat"],
-  prixVente: ["prix vente référence", "prix vente source", "prix vente ref", "prix vente"],
-  stock: ["stock initial", "stock"],
-  stockMin: ["stock minimum", "stock min"],
+  designation: ["désignation", "designation", "produit", "article", "libellé", "libelle"],
+  categorie: ["catégorie", "categorie", "category", "famille"],
+  unite: ["unité de mesure", "unité", "unite", "unite de mesure", "u.m"],
+  prixAchat: ["prix achat référence", "prix achat source", "prix achat ref", "prix achat", "pa", "prix d'achat"],
+  prixVente: ["prix vente référence", "prix vente source", "prix vente ref", "prix vente", "pv", "prix de vente"],
+  stock: ["stock initial", "stock", "qte initiale", "quantité initiale", "quantite initiale"],
+  stockMin: ["stock minimum", "stock min", "seuil", "seuil minimum"],
 };
 
 function findColumn(header: string[], aliases: string[]): number {
@@ -21,7 +21,15 @@ function findColumn(header: string[], aliases: string[]): number {
     const idx = lower.indexOf(alias.toLowerCase());
     if (idx !== -1) return idx;
   }
+  for (const alias of aliases) {
+    const idx = lower.findIndex(h => h.includes(alias.toLowerCase()));
+    if (idx !== -1) return idx;
+  }
   return -1;
+}
+
+function hasSheet(wb: XLSX.WorkBook, name: string): boolean {
+  return wb.SheetNames.some(s => s.toLowerCase() === name.toLowerCase());
 }
 
 function parseNumber(val: unknown): number {
@@ -61,7 +69,7 @@ export async function POST(request: NextRequest) {
     const results = { produits: 0, achats: 0, ventes: 0, errors: [] as string[] };
 
     // --- Import PRODUITS ---
-    if (wb.SheetNames.includes("PRODUITS")) {
+    if (hasSheet(wb, "PRODUITS")) {
       const sheet = XLSX.utils.sheet_to_json(wb.Sheets["PRODUITS"], { header: 1, defval: "" }) as unknown[][];
       const header = (sheet[0] || []).map(h => String(h).trim());
       const col = {
@@ -167,7 +175,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Import ACHATS ---
-    if (wb.SheetNames.includes("ACHATS")) {
+    if (hasSheet(wb, "ACHATS")) {
       const sheet = XLSX.utils.sheet_to_json(wb.Sheets["ACHATS"], { header: 1, defval: "" }) as unknown[][];
       const header = (sheet[0] || []).map(h => String(h).trim());
       const colCode = findColumn(header, HEADER_ALIASES.code);
@@ -250,7 +258,7 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Import VENTES ---
-    if (wb.SheetNames.includes("VENTES")) {
+    if (hasSheet(wb, "VENTES")) {
       const sheet = XLSX.utils.sheet_to_json(wb.Sheets["VENTES"], { header: 1, defval: "" }) as unknown[][];
       const header = (sheet[0] || []).map(h => String(h).trim());
       const colCode = findColumn(header, HEADER_ALIASES.code);

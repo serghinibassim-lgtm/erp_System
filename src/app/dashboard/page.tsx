@@ -10,6 +10,7 @@ import LoadingDots from "@/components/LoadingDots";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
+  LineChart, Line, CartesianGrid, Legend,
 } from "recharts";
 
 const COLORS = ["hsl(142, 76%, 36%)", "hsl(0, 84%, 60%)"];
@@ -32,6 +33,7 @@ interface DashboardData {
   topProduits: { code: string; designation: string; stockActuel: number; valeurAchat: number }[];
   achatsRecents: { id: string; date: string; montantTotal: number; produit: { code: string; designation: string }; fournisseur: { nom: string } | null }[];
   ventesRecentes: { id: string; date: string; montantTotal: number; produit: { code: string; designation: string }; client: { nom: string } | null }[];
+  evolutionMensuelle: { mois: string; achats: number; ventes: number }[];
 }
 
 export default function DashboardPage() {
@@ -76,9 +78,11 @@ export default function DashboardPage() {
     );
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(value);
-  };
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(value);
+};
+
+const formatMAD = (val: number) => `${val.toFixed(2)} MAD`;
 
   const calcTrend = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? { val: "+100%", dir: "up", color: "text-emerald-500" } : null;
@@ -151,6 +155,26 @@ export default function DashboardPage() {
         })}
       </div>
 
+      <div className="flex flex-col rounded-2xl bg-card text-card-foreground shadow-sm ring-1 ring-border">
+        <div className="flex flex-col gap-1 px-6 pt-6">
+          <h3 className="text-xl font-bold leading-snug">Évolution mensuelle (MAD)</h3>
+          <p className="text-sm text-muted-foreground">Entrées (achats) et sorties (ventes) par mois.</p>
+        </div>
+        <div className="p-6">
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={data.evolutionMensuelle} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="mois" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} />
+              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+              <Legend />
+              <Line type="monotone" dataKey="achats" name="Achats" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="ventes" name="Ventes" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col rounded-2xl bg-card text-card-foreground shadow-sm ring-1 ring-border">
           <div className="flex flex-col gap-1 px-6 pt-6">
@@ -200,7 +224,7 @@ export default function DashboardPage() {
                       <Cell key={i} fill={COLORS[i]} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+              <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
                 </PieChart>
               </ResponsiveContainer>
             )}

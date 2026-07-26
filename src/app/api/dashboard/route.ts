@@ -6,54 +6,47 @@ export async function GET() {
     const now = new Date();
     const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+    const months: { label: string; index: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ label: d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }), index: d.getMonth() + d.getFullYear() * 12 });
+    }
 
     const [
-      produits, stocks, achats, ventes, clients, fournisseurs, 
+      produits, stocks, achats, ventes, clients, fournisseurs,
       toutesVentes, tousAchats,
       ventesCeMois, ventesMoisDernier,
-      achatsCeMois, achatsMoisDernier
+      achatsCeMois, achatsMoisDernier,
+      achatsAnnee, ventesAnnee,
     ] = await Promise.all([
       prisma.produit.count(),
-      prisma.stock.findMany({
-        include: { produit: { select: { code: true, designation: true } } },
-      }),
-      prisma.achat.findMany({
-        take: 5,
-        orderBy: { date: "desc" },
-        include: {
-          produit: { select: { code: true, designation: true } },
-          fournisseur: { select: { nom: true } },
-        },
-      }),
-      prisma.vente.findMany({
-        take: 5,
-        orderBy: { date: "desc" },
-        include: {
-          produit: { select: { code: true, designation: true } },
-          client: { select: { nom: true } },
-        },
-      }),
+      prisma.stock.findMany({ include: { produit: { select: { code: true, designation: true } } } }),
+      prisma.achat.findMany({ take: 5, orderBy: { date: "desc" }, include: { produit: { select: { code: true, designation: true } }, fournisseur: { select: { nom: true } } } }),
+      prisma.vente.findMany({ take: 5, orderBy: { date: "desc" }, include: { produit: { select: { code: true, designation: true } }, client: { select: { nom: true } } } }),
       prisma.client.count(),
       prisma.fournisseur.count(),
       prisma.vente.aggregate({ _sum: { montantTotal: true } }),
       prisma.achat.aggregate({ _sum: { montantTotal: true } }),
-      prisma.vente.aggregate({ 
-        _sum: { montantTotal: true },
-        where: { date: { gte: firstDayThisMonth } }
-      }),
-      prisma.vente.aggregate({ 
-        _sum: { montantTotal: true },
-        where: { date: { gte: firstDayLastMonth, lt: firstDayThisMonth } }
-      }),
-      prisma.achat.aggregate({ 
-        _sum: { montantTotal: true },
-        where: { date: { gte: firstDayThisMonth } }
-      }),
-      prisma.achat.aggregate({ 
-        _sum: { montantTotal: true },
-        where: { date: { gte: firstDayLastMonth, lt: firstDayThisMonth } }
-      }),
+      prisma.vente.aggregate({ _sum: { montantTotal: true }, where: { date: { gte: firstDayThisMonth } } }),
+      prisma.vente.aggregate({ _sum: { montantTotal: true }, where: { date: { gte: firstDayLastMonth, lt: firstDayThisMonth } } }),
+      prisma.achat.aggregate({ _sum: { montantTotal: true }, where: { date: { gte: firstDayThisMonth } } }),
+      prisma.achat.aggregate({ _sum: { montantTotal: true }, where: { date: { gte: firstDayLastMonth, lt: firstDayThisMonth } } }),
+      prisma.achat.findMany({ where: { date: { gte: twelveMonthsAgo } }, select: { date: true, montantTotal: true } }),
+      prisma.vente.findMany({ where: { date: { gte: twelveMonthsAgo } }, select: { date: true, montantTotal: true } }),
     ]);
+
+    const achatMap: Record<number, number> = {};
+    const venteMap: Record<number, number> = {};
+    achatsAnnee.forEach(a => { const k = a.date.getMonth() + a.date.getFullYear() * 12; achatMap[k] = (achatMap[k] || 0) + Number(a.montantTotal); });
+    ventesAnnee.forEach(v => { const k = v.date.getMonth() + v.date.getFullYear() * 12; venteMap[k] = (venteMap[k] || 0) + Number(v.montantTotal); });
+
+    const evolutionMensuelle = months.map(m => ({
+      mois: m.label,
+      achats: achatMap[m.index] || 0,
+      ventes: venteMap[m.index] || 0,
+    }));
 
     const stockTotal = stocks.reduce((sum, s) => sum + s.stockActuel, 0);
     const stockAlerte = stocks.filter(s => s.statutStock === "Alerte").length;
@@ -94,6 +87,7 @@ export async function GET() {
       topProduits,
       achatsRecents: achats,
       ventesRecentes: ventes,
+      evolutionMensuelle,
     });
   } catch (err) {
     console.error("Dashboard GET error:", err);

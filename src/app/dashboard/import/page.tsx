@@ -6,7 +6,7 @@ import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react"
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; results?: { produits: number; ventes: number; errors: string[] } } | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string; results?: { produits: number; achats: number; ventes: number; errors: string[] } } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +117,7 @@ export default function ImportPage() {
             {result.results && (
               <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                 <li>{result.results.produits} produit(s) importés</li>
+                <li>{result.results.achats} achat(s) importé(s)</li>
                 <li>{result.results.ventes} vente(s) historique(s) importées</li>
                 {result.results.errors.length > 0 && (
                   <li className="text-red-500">
