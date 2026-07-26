@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import LoadingDots from "@/components/LoadingDots";
 
 interface HistoriquePrix {
   id: string;
@@ -132,7 +133,7 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
   };
 
   if (loading) {
-    return <p className="text-muted-foreground">Chargement...</p>;
+    return <p className="text-muted-foreground"><LoadingDots /></p>;
   }
 
   if (error && !produit) {

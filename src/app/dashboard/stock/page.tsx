@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Download } from "lucide-react";
+import LoadingDots from "@/components/LoadingDots";
 
 interface StockItem {
   id: string;
@@ -18,6 +19,7 @@ interface StockItem {
     designation: string;
     unite: string;
     stockMin: number;
+    categorie: string;
   };
 }
 
@@ -26,6 +28,7 @@ export default function StockPage() {
   const [recherche, setRecherche] = useState("");
   const [minQuantite, setMinQuantite] = useState("");
   const [maxQuantite, setMaxQuantite] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
 
   const fetchStocks = useCallback(async () => {
@@ -48,11 +51,26 @@ export default function StockPage() {
 
   useEffect(() => { fetchStocks(); }, [fetchStocks]);
 
+  const toggleSort = () => setSortOrder(o => o === "asc" ? "desc" : "asc");
+
+  const sortedStocks = [...stocks].sort((a, b) => {
+    const dir = sortOrder === "asc" ? 1 : -1;
+    return dir * (a.stockActuel - b.stockActuel);
+  });
+
   const totalStock = stocks.reduce((sum, s) => sum + s.stockActuel, 0);
   const totalValue = stocks.reduce((sum, s) => sum + Number(s.valeurAchat), 0);
   const totalSaleValue = stocks.reduce((sum, s) => sum + Number(s.valeurVente), 0);
   const totalMargin = stocks.reduce((sum, s) => sum + Number(s.margePotentielle), 0);
   const alertCount = stocks.filter(s => s.statutStock === "Alerte").length;
+  const alertsByCategory = stocks
+    .filter(s => s.statutStock === "Alerte")
+    .reduce((acc, s) => {
+      const cat = s.produit.categorie || "Autre";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(s);
+      return acc;
+    }, {} as Record<string, typeof stocks>);
 
   return (
     <div className="space-y-6">
@@ -82,34 +100,37 @@ export default function StockPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <div className="rounded-lg border bg-card p-3 md:p-4">
           <p className="text-xs text-muted-foreground md:text-sm">Stock total</p>
-          <p className="text-lg font-bold md:text-2xl">{totalStock}</p>
+          <p className="text-lg font-bold md:text-2xl text-blue-600">{totalStock}</p>
         </div>
         <div className="rounded-lg border bg-card p-3 md:p-4">
           <p className="text-xs text-muted-foreground md:text-sm">Valeur de stock</p>
-          <p className="text-lg font-bold md:text-2xl">{totalValue.toFixed(2)}</p>
+          <p className="text-lg font-bold md:text-2xl text-amber-600">{totalValue.toFixed(2)} DH</p>
         </div>
         <div className="rounded-lg border bg-card p-3 md:p-4">
           <p className="text-xs text-muted-foreground md:text-sm">Valeur de vente</p>
-          <p className="text-lg font-bold md:text-2xl">{totalSaleValue.toFixed(2)}</p>
+          <p className="text-lg font-bold md:text-2xl text-emerald-600">{totalSaleValue.toFixed(2)} DH</p>
         </div>
         <div className="rounded-lg border bg-card p-3 md:p-4">
           <p className="text-xs text-muted-foreground md:text-sm">Marge potentielle</p>
-          <p className="text-lg font-bold md:text-2xl">{totalMargin.toFixed(2)}</p>
+          <p className={`text-lg font-bold md:text-2xl ${totalMargin >= 0 ? "text-green-600" : "text-red-600"}`}>{totalMargin.toFixed(2)} DH</p>
         </div>
       </div>
 
       {alertCount > 0 && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm">
-          <p className="font-semibold mb-2">{alertCount} produit(s) en alerte de stock :</p>
-          <ul className="list-disc pl-5 space-y-1">
-            {stocks
-              .filter(s => s.statutStock === "Alerte")
-              .map(s => (
-                <li key={s.id}>
-                  <span className="font-medium">{s.produit.code} - {s.produit.designation}</span> : <span className="font-bold">{s.stockActuel}</span> restants (Seuil min : {s.produit.stockMin})
-                </li>
-              ))}
-          </ul>
+          <p className="font-semibold mb-3">{alertCount} produit(s) en alerte de stock :</p>
+          {Object.entries(alertsByCategory).map(([categorie, items]) => (
+            <div key={categorie} className="mb-3 last:mb-0">
+              <p className="font-medium text-red-700 mb-1.5">{categorie}</p>
+              <ul className="list-disc pl-5 space-y-1">
+                {items.map(s => (
+                  <li key={s.id}>
+                    <span className="font-medium">{s.produit.code} - {s.produit.designation}</span> : <span className="font-bold">{s.stockActuel}</span> restants (Seuil min : {s.produit.stockMin})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       )}
 
@@ -147,7 +168,7 @@ export default function StockPage() {
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Stock initial</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Achats</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Ventes</th>
-              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Stock actuel</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 cursor-pointer select-none hover:bg-muted/50" onClick={toggleSort}>Stock actuel{sortOrder === "asc" ? " ↑" : " ↓"}</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Seuil min</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Statut</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Coût</th>
@@ -158,7 +179,7 @@ export default function StockPage() {
             {loading ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                 <td colSpan={9} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">
-                  Chargement...
+                  <LoadingDots />
                 </td>
               </tr>
             ) : stocks.length === 0 ? (
@@ -167,8 +188,8 @@ export default function StockPage() {
                   Aucun stock trouvé
                 </td>
               </tr>
-            ) : (
-              stocks.map((s) => (
+              ) : (
+                sortedStocks.map((s) => (
                 <tr key={s.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                   <td className="p-3 align-middle whitespace-nowrap font-medium">{s.produit.code} - {s.produit.designation}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.stockInitial}</td>

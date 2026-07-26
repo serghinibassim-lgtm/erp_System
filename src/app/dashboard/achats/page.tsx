@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import LoadingDots from "@/components/LoadingDots";
 
 interface Achat {
   id: string;
@@ -23,6 +24,8 @@ export default function AchatsPage() {
   const [maxQuantite, setMaxQuantite] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [sortField, setSortField] = useState<"date" | "quantite">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
 
   const fetchAchats = useCallback(async () => {
@@ -46,6 +49,26 @@ export default function AchatsPage() {
   }, [recherche, minQuantite, maxQuantite, dateFrom, dateTo]);
 
   useEffect(() => { fetchAchats(); }, [fetchAchats]);
+
+  const toggleSort = (field: "date" | "quantite") => {
+    if (sortField === field) {
+      setSortOrder(o => o === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const sortedAchats = [...achats].sort((a, b) => {
+    const dir = sortOrder === "asc" ? 1 : -1;
+    if (sortField === "date") return dir * (new Date(a.date).getTime() - new Date(b.date).getTime());
+    return dir * (a.quantite - b.quantite);
+  });
+
+  const sortIndicator = (field: "date" | "quantite") => {
+    if (sortField !== field) return " ↕";
+    return sortOrder === "asc" ? " ↑" : " ↓";
+  };
 
   return (
     <div className="space-y-6">
@@ -105,11 +128,11 @@ export default function AchatsPage() {
           <table className="w-full caption-bottom text-base border-collapse">
             <thead className="[&_tr]:border-b">
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Date</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 cursor-pointer select-none hover:bg-muted/50" onClick={() => toggleSort("date")}>Date{sortIndicator("date")}</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Document</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Produit</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Fournisseur</th>
-                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Qté</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 cursor-pointer select-none hover:bg-muted/50" onClick={() => toggleSort("quantite")}>Qté{sortIndicator("quantite")}</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Prix unit.</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Total</th>
                 <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Alerte</th>
@@ -120,7 +143,7 @@ export default function AchatsPage() {
               {loading ? (
                 <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                   <td colSpan={9} className="p-3 align-middle whitespace-nowrap text-center py-8 text-muted-foreground">
-                    Chargement...
+                    <LoadingDots />
                   </td>
                 </tr>
               ) : achats.length === 0 ? (
@@ -130,7 +153,7 @@ export default function AchatsPage() {
                   </td>
                 </tr>
               ) : (
-                achats.map((p) => (
+                sortedAchats.map((p) => (
                   <tr key={p.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                     <td className="p-3 align-middle whitespace-nowrap">{new Date(p.date).toLocaleDateString("fr-FR")}</td>
                     <td className="p-3 align-middle whitespace-nowrap">{p.numeroAchat || "-"}</td>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Upload, Plus } from "lucide-react";
+import LoadingDots from "@/components/LoadingDots";
 import { useAuth } from "@/context/AuthContext";
 
 interface Parameter {
@@ -136,7 +137,7 @@ export default function ParametersPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Chargement...</p>
+        <p className="text-sm text-muted-foreground"><LoadingDots /></p>
       ) : (
         <>
           <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">

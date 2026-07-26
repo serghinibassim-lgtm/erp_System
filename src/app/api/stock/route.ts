@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: { produit: { code: "asc" } },
       include: {
-        produit: { select: { code: true, designation: true, unite: true, stockMin: true } },
+        produit: { select: { code: true, designation: true, unite: true, stockMin: true, categorie: true } },
       },
     });
 

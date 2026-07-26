@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import LoadingDots from "@/components/LoadingDots";
 
 interface Supplier {
   id: string;
@@ -145,7 +146,7 @@ export default function SuppliersPage() {
           <tbody className="[&_tr:last-child]:border-0">
             {loading ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                <td colSpan={isResponsable ? 6 : 5} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Chargement...</td>
+                <td colSpan={isResponsable ? 6 : 5} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap"><LoadingDots /></td>
               </tr>
             ) : suppliers.length === 0 ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">

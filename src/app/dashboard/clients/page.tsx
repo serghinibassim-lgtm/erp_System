@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import LoadingDots from "@/components/LoadingDots";
 
 interface Client {
   id: string;
@@ -143,7 +144,7 @@ export default function ClientsPage() {
           <tbody className="[&_tr:last-child]:border-0">
             {loading ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                <td colSpan={isResponsable ? 5 : 4} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap">Chargement...</td>
+                <td colSpan={isResponsable ? 5 : 4} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap"><LoadingDots /></td>
               </tr>
             ) : clients.length === 0 ? (
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">

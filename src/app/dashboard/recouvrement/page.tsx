@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, CheckCircle, FileText } from "lucide-react";
+import LoadingDots from "@/components/LoadingDots";
 
 interface CreditClient {
   id: string;
@@ -131,7 +132,7 @@ export default function RecouvrementPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+        <div className="text-center py-8 text-muted-foreground"><LoadingDots /></div>
       ) : (
         <div className="flex flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
           <div className="flex flex-col gap-1 px-4 pt-4">

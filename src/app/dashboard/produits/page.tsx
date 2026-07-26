@@ -3,6 +3,7 @@
 import {useState, useEffect, useCallback, ChangeEvent} from "react";
 import Link from "next/link";
 import {Download} from "lucide-react";
+import LoadingDots from "@/components/LoadingDots";
 import {useAuth} from "@/context/AuthContext";
 
 interface Stock {
@@ -160,7 +161,7 @@ export default function ProduitsPage() {
                         <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                             <td colSpan={7}
                                 className="p-3 align-middle whitespace-nowrap text-sm text-center py-8 text-muted-foreground">
-                                Chargement...
+                                <LoadingDots />
                             </td>
                         </tr>
                     ) : produits.length === 0 ? (

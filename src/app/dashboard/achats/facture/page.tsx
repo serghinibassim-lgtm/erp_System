@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Printer, Download } from "lucide-react";
+import LoadingDots from "@/components/LoadingDots";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -121,7 +122,7 @@ function FactureAchatContent() {
 
 
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground">Chargement...</div>;
+  if (loading) return <div className="p-8 text-center text-muted-foreground"><LoadingDots /></div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
   if (!document) return null;
 
@@ -212,7 +213,7 @@ function FactureAchatContent() {
 
 export default function FactureAchatPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Chargement...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground"><LoadingDots /></div>}>
       <FactureAchatContent />
     </Suspense>
   );
