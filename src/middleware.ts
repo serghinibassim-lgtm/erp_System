@@ -5,7 +5,7 @@ import { getTokenFromRequest, verifyTokenEdge } from "@/lib/auth-edge";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/login")) {
+  if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
     const token = await getTokenFromRequest(request);
     if (token) {
       try {
@@ -39,8 +39,11 @@ export async function middleware(request: NextRequest) {
     try {
       const payload = await verifyTokenEdge(token);
 
-      // Seul RESPONSABLE peut accéder aux paramètres
+      // Seul RESPONSABLE peut accéder aux paramètres et à la gestion des utilisateurs
       if (pathname.startsWith("/dashboard/parametres") && payload.role !== "RESPONSABLE") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+      if (pathname.startsWith("/dashboard/utilisateurs") && payload.role !== "RESPONSABLE") {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
 

@@ -17,6 +17,9 @@ export default function VitrinePage() {
           <Link href="/login" className="inline-flex h-12 items-center justify-center rounded-full border border-input bg-background px-8 text-base font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
             Se connecter
           </Link>
+          <Link href="/register" className="inline-flex h-12 items-center justify-center rounded-full bg-primary text-primary-foreground px-8 text-base font-medium shadow-sm transition-colors hover:bg-primary/90">
+            Créer un compte
+          </Link>
         </div>
       </section>
 

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, Package, ShoppingCart, TrendingUp,
-  ClipboardList, Building2, Users, Settings, Upload, LogOut, Menu, X, CreditCard,
+  ClipboardList, Building2, Users, Settings, Upload, LogOut, Menu, X, CreditCard, UserCog,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -19,7 +19,8 @@ const allNavItems = [
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/recouvrement", label: "Recouvrement", icon: CreditCard },
   { href: "/dashboard/parametres", label: "Paramètres", icon: Settings },
- { href: "/dashboard/import", label: "Import", icon: Upload },
+  { href: "/dashboard/import", label: "Import", icon: Upload },
+  { href: "/dashboard/utilisateurs", label: "Utilisateurs", icon: UserCog },
 ];
 
 export default function Sidebar() {
@@ -39,7 +40,9 @@ export default function Sidebar() {
   };
 
   const navItems = allNavItems.filter(item =>
-    item.href === "/dashboard/parametres" ? user?.role === "RESPONSABLE" : true
+    item.href === "/dashboard/parametres" || item.href === "/dashboard/utilisateurs" || item.href === "/dashboard/import"
+      ? user?.role === "RESPONSABLE"
+      : true
   );
 
   const roleLabel = user?.role === "RESPONSABLE" ? "Responsable" : user?.role === "EMPLOYER" ? "Employé" : user?.role || "";
