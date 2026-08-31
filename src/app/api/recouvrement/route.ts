@@ -48,6 +48,9 @@ export async function GET() {
         .filter((v) => v.datePaiement)
         .map((v) => v.datePaiement!)
         .sort((a, b) => b.getTime() - a.getTime())[0] || null;
+      const derniereActivite = [...c.ventes]
+        .map((v) => new Date(v.date).getTime())
+        .sort((a, b) => b - a)[0] || 0;
 
       return {
         id: c.id,
@@ -62,8 +65,11 @@ export async function GET() {
         statut: c.unpaidVentes.length === 0 ? "Payé" : enRetard ? "En retard" : "En attente",
         numeroVente: dernierNumeroVente,
         datePaiement: dernierDatePaiement ? dernierDatePaiement.toISOString() : null,
+        derniereActivite,
       };
     });
+
+    creditClients.sort((a, b) => b.derniereActivite - a.derniereActivite);
 
     const unpaidClients = creditClients.filter((c) => c.statut !== "Payé");
     const totalUnpaid = unpaidClients.reduce((sum, c) => sum + c.unpaidTotal, 0);
@@ -90,7 +96,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { clientId, numeroVente } = body;
+    const { clientId, numeroVente, paye = true } = body;
 
     if (!clientId && !numeroVente) {
       return NextResponse.json({ error: "clientId ou numeroVente requis" }, { status: 400 });
@@ -98,14 +104,14 @@ export async function PATCH(request: NextRequest) {
 
     const where: Record<string, unknown> = {
       modePaiement: { contains: "Crédit", mode: "insensitive" },
-      paye: false,
+      paye: !paye,
     };
     if (clientId) where.clientId = clientId;
     if (numeroVente) where.numeroVente = numeroVente;
 
     const result = await prisma.vente.updateMany({
       where,
-      data: { paye: true, datePaiement: new Date() },
+      data: paye ? { paye: true, datePaiement: new Date() } : { paye: false, datePaiement: null },
     });
 
     return NextResponse.json({ success: true, count: result.count });

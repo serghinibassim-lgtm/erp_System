@@ -95,7 +95,7 @@ export default function UtilisateursPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Utilisateurs</h1>
@@ -184,28 +184,33 @@ export default function UtilisateursPage() {
       {loading ? (
         <p className="text-sm text-muted-foreground"><LoadingDots /></p>
       ) : utilisateurs.length === 0 ? (
-        <div className="rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10 p-8 text-center">
-          <p className="text-muted-foreground">Aucun utilisateur pour le moment</p>
+        <div className="relative w-full overflow-x-auto rounded-md border">
+          <table className="w-full caption-bottom text-base border-collapse">
+            <tbody>
+              <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                <td className="p-3 align-middle text-sm text-center py-8 text-muted-foreground">Aucun utilisateur pour le moment</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       ) : (
-        <div className="rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left text-sm text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Nom</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Rôle</th>
-                  <th className="px-4 py-3 font-medium">Créé le</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+        <div className="relative w-full overflow-x-auto rounded-md border">
+            <table className="w-full caption-bottom text-base border-collapse">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Nom</th>
+                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Email</th>
+                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Rôle</th>
+                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Créé le</th>
+                  <th className="h-11 px-3 text-right align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="[&_tr:last-child]:border-0">
                 {utilisateurs.map((u) => (
-                  <tr key={u.id} className="border-b last:border-0 hover:bg-muted/50">
-                    <td className="px-4 py-3 text-sm font-medium">{u.nom}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{u.email}</td>
-                    <td className="px-4 py-3 text-sm">
+                  <tr key={u.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                    <td className="p-3 align-middle whitespace-nowrap text-sm font-medium">{u.nom}</td>
+                    <td className="p-3 align-middle whitespace-nowrap text-sm text-muted-foreground">{u.email}</td>
+                    <td className="p-3 align-middle whitespace-nowrap text-sm">
                       <span className={`inline-flex h-5 items-center rounded-full border px-2 text-xs font-medium ${
                         u.role === "RESPONSABLE"
                           ? "border-transparent bg-primary/10 text-primary"
@@ -214,10 +219,10 @@ export default function UtilisateursPage() {
                         {u.role === "RESPONSABLE" ? "Responsable" : "Employé"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                    <td className="p-3 align-middle whitespace-nowrap text-sm text-muted-foreground">
                       {new Date(u.creeLe).toLocaleDateString("fr-FR")}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="p-3 align-middle text-right">
                       {u.role !== "RESPONSABLE" && (
                         <button
                           onClick={() => handleDelete(u.id)}
@@ -231,7 +236,6 @@ export default function UtilisateursPage() {
                 ))}
               </tbody>
             </table>
-          </div>
         </div>
       )}
     </div>

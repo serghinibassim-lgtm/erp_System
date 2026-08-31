@@ -5,24 +5,30 @@ import { requireRole } from "@/lib/auth";
 import * as XLSX from "xlsx";
 
 const HEADER_ALIASES: Record<string, string[]> = {
-  code: ["code produit", "code"],
-  designation: ["désignation", "designation", "produit", "article", "libellé", "libelle"],
-  categorie: ["catégorie", "categorie", "category", "famille"],
-  unite: ["unité de mesure", "unité", "unite", "unite de mesure", "u.m"],
-  prixAchat: ["prix achat référence", "prix achat source", "prix achat ref", "prix achat", "pa", "prix d'achat"],
-  prixVente: ["prix vente référence", "prix vente source", "prix vente ref", "prix vente", "pv", "prix de vente"],
-  stock: ["stock initial", "stock", "qte initiale", "quantité initiale", "quantite initiale"],
-  stockMin: ["stock minimum", "stock min", "seuil", "seuil minimum"],
+  code: ["code produit", "code", "code_produit", "ref", "reference", "référence", "codage", "sku", "id"],
+  designation: ["désignation", "designation", "produit", "article", "libellé", "libelle", "nom", "description", "nom produit", "desc"],
+  categorie: ["catégorie", "categorie", "category", "famille", "cat", "type"],
+  unite: ["unité de mesure", "unité", "unite", "unite de mesure", "u.m", "um", "unité mesure"],
+  prixAchat: ["prix achat référence", "prix achat réf", "prix achat source", "prix achat ref", "prix achat", "pa", "prix d'achat", "prix_achat", "prix achat de revient", "pcrib"],
+  prixVente: ["prix vente référence", "prix vente réf", "prix vente source", "prix vente ref", "prix vente", "pv", "prix de vente", "prix_vente", "prix public"],
+  stock: ["stock initial", "stock", "qte initiale", "quantité initiale", "quantite initiale", "stock_initial", "stock ini", "qte", "quantite", "quantité"],
+  stockMin: ["stock minimum", "stock min", "seuil", "seuil minimum", "stock_min", "stock minimum alerte"],
 };
 
+function stripAccents(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function findColumn(header: string[], aliases: string[]): number {
-  const lower = header.map(h => String(h).toLowerCase().trim());
+  const lower = header.map(h => stripAccents(String(h).toLowerCase().trim()));
   for (const alias of aliases) {
-    const idx = lower.indexOf(alias.toLowerCase());
+    const a = stripAccents(alias.toLowerCase());
+    const idx = lower.indexOf(a);
     if (idx !== -1) return idx;
   }
   for (const alias of aliases) {
-    const idx = lower.findIndex(h => h.includes(alias.toLowerCase()));
+    const a = stripAccents(alias.toLowerCase());
+    const idx = lower.findIndex(h => h.includes(a));
     if (idx !== -1) return idx;
   }
   return -1;
@@ -30,6 +36,14 @@ function findColumn(header: string[], aliases: string[]): number {
 
 function hasSheet(wb: XLSX.WorkBook, name: string): boolean {
   return wb.SheetNames.some(s => s.toLowerCase() === name.toLowerCase());
+}
+
+function findHeaderRow(sheet: unknown[][]): number {
+  for (let i = 0; i < Math.min(10, sheet.length); i++) {
+    const filled = sheet[i].filter(c => String(c).trim() !== "").length;
+    if (filled >= 2) return i;
+  }
+  return 0;
 }
 
 function parseNumber(val: unknown): number {
@@ -68,10 +82,19 @@ export async function POST(request: NextRequest) {
 
     const results = { produits: 0, achats: 0, ventes: 0, errors: [] as string[] };
 
+    if (!hasSheet(wb, "PRODUITS") && !hasSheet(wb, "ACHATS") && !hasSheet(wb, "VENTES")) {
+      return NextResponse.json({
+        success: false,
+        message: `Aucune feuille compatible trouvée. Feuilles disponibles : [${wb.SheetNames.join(", ")}]. Nommez votre feuille "PRODUITS", "ACHATS" ou "VENTES".`,
+        results,
+      });
+    }
+
     // --- Import PRODUITS ---
     if (hasSheet(wb, "PRODUITS")) {
       const sheet = XLSX.utils.sheet_to_json(wb.Sheets["PRODUITS"], { header: 1, defval: "" }) as unknown[][];
-      const header = (sheet[0] || []).map(h => String(h).trim());
+      const headerIdx = findHeaderRow(sheet);
+      const header = (sheet[headerIdx] || []).map(h => String(h).trim());
       const col = {
         code: findColumn(header, HEADER_ALIASES.code),
         designation: findColumn(header, HEADER_ALIASES.designation),
@@ -86,12 +109,12 @@ export async function POST(request: NextRequest) {
       if (col.code === -1 || col.designation === -1) {
         return NextResponse.json({
           success: false,
-          message: "Colonnes 'Code produit' et 'Désignation' introuvables dans la feuille PRODUITS",
+          message: `Colonnes introuvables dans la feuille PRODUITS. En-têtes trouvés : [${header.join(", ")}]. Colonnes obligatoires : "Code produit" et "Désignation".`,
           results,
         });
       }
 
-      for (let i = 1; i < sheet.length; i++) {
+      for (let i = headerIdx + 1; i < sheet.length; i++) {
         const row = sheet[i];
         const code = String(row[col.code] || "").trim();
         const designation = String(row[col.designation] || "").trim();
@@ -177,16 +200,17 @@ export async function POST(request: NextRequest) {
     // --- Import ACHATS ---
     if (hasSheet(wb, "ACHATS")) {
       const sheet = XLSX.utils.sheet_to_json(wb.Sheets["ACHATS"], { header: 1, defval: "" }) as unknown[][];
-      const header = (sheet[0] || []).map(h => String(h).trim());
+      const headerIdx = findHeaderRow(sheet);
+      const header = (sheet[headerIdx] || []).map(h => String(h).trim());
       const colCode = findColumn(header, HEADER_ALIASES.code);
-      const colDate = header.findIndex(h => /date/i.test(h));
-      const colQty = header.findIndex(h => /quantité|quantite|qté|qte|quantite/i.test(h));
-      const colPrice = header.findIndex(h => /prix.*achat|prix/i.test(h));
-      const colDoc = header.findIndex(h => /numéro|numero|document|facture|fact/i.test(h));
-      const colFournisseur = header.findIndex(h => /fournisseur|fournisseur/i.test(h));
-      const colPaiement = header.findIndex(h => /paiement|mode.*paiement/i.test(h));
+      const colDate = header.findIndex(h => /date/i.test(stripAccents(h)));
+      const colQty = header.findIndex(h => /quantite|qte/i.test(stripAccents(h)));
+      const colPrice = header.findIndex(h => /prix.*achat|prix/i.test(stripAccents(h)));
+      const colDoc = header.findIndex(h => /numero|document|facture|fact/i.test(stripAccents(h)));
+      const colFournisseur = header.findIndex(h => /fournisseur/i.test(stripAccents(h)));
+      const colPaiement = header.findIndex(h => /paiement|mode.*paiement/i.test(stripAccents(h)));
 
-      for (let i = 1; i < sheet.length; i++) {
+      for (let i = headerIdx + 1; i < sheet.length; i++) {
         const row = sheet[i];
         const code = String(row[colCode] || "").trim();
         const qty = parseInt(String(row[colQty] || "0"));
@@ -260,20 +284,21 @@ export async function POST(request: NextRequest) {
     // --- Import VENTES ---
     if (hasSheet(wb, "VENTES")) {
       const sheet = XLSX.utils.sheet_to_json(wb.Sheets["VENTES"], { header: 1, defval: "" }) as unknown[][];
-      const header = (sheet[0] || []).map(h => String(h).trim());
+      const headerIdx = findHeaderRow(sheet);
+      const header = (sheet[headerIdx] || []).map(h => String(h).trim());
       const colCode = findColumn(header, HEADER_ALIASES.code);
-      const colDate = header.findIndex(h => /date/i.test(h));
-      const colQty = header.findIndex(h => /quantité|quantite|qté|qte|quantite/i.test(h));
-      const colPrice = header.findIndex(h => /prix.*vente|prix/i.test(h));
-      const colNumero = header.findIndex(h => /numéro|numero|vente|facture|fact/i.test(h));
-      const colClient = header.findIndex(h => /client|client/i.test(h));
-      const colPaiement = header.findIndex(h => /paiement|mode.*paiement/i.test(h));
+      const colDate = header.findIndex(h => /date/i.test(stripAccents(h)));
+      const colQty = header.findIndex(h => /quantite|qte/i.test(stripAccents(h)));
+      const colPrice = header.findIndex(h => /prix.*vente|prix/i.test(stripAccents(h)));
+      const colNumero = header.findIndex(h => /numero|vente|facture|fact/i.test(stripAccents(h)));
+      const colClient = header.findIndex(h => /client/i.test(stripAccents(h)));
+      const colPaiement = header.findIndex(h => /paiement|mode.*paiement/i.test(stripAccents(h)));
 
       const codeIdx = colCode !== -1 ? colCode : 2;
       const qtyIdx = colQty !== -1 ? colQty : 5;
       const priceIdx = colPrice !== -1 ? colPrice : 6;
 
-      for (let i = 1; i < sheet.length; i++) {
+      for (let i = headerIdx + 1; i < sheet.length; i++) {
         const row = sheet[i];
         const code = String(row[codeIdx] || "").trim();
         const qty = parseInt(String(row[qtyIdx] || "0"));

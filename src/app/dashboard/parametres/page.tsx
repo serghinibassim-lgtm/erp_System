@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Upload, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 import { useAuth } from "@/context/AuthContext";
 
@@ -122,18 +121,12 @@ export default function ParametersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Paramètres</h1>
           <p className="text-sm text-muted-foreground md:text-base">Configuration de l&apos;application</p>
         </div>
-        <Link href="/dashboard/import">
-          <button className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 sm:w-auto [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4">
-            <Upload className="h-4 w-4" />
-            Import Excel
-          </button>
-        </Link>
       </div>
 
       {loading ? (
@@ -166,7 +159,7 @@ export default function ParametersPage() {
                     Enregistrer
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-lg text-muted-foreground">
                   Alerte si prix d&apos;achat &gt; prix de réf. + seuil (&gt; prix réf.)
                 </p>
               </div>
@@ -192,7 +185,7 @@ export default function ParametersPage() {
                     Enregistrer
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-lg text-muted-foreground">
                   Alerte si prix de vente &lt; prix de réf. - seuil (&lt; prix réf.)
                 </p>
               </div>
@@ -204,7 +197,7 @@ export default function ParametersPage() {
               <h2 className="text-lg font-semibold leading-snug">Alerte stock faible</h2>
             </div>
             <div className="px-4 pb-4">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-lg text-muted-foreground">
                 Une alerte de stock est déclenchée automatiquement lorsque le stock
                 courant d&apos;un produit atteint ou passe en dessous de son stock minimum.
                 Le stock minimum est défini individuellement pour chaque produit dans

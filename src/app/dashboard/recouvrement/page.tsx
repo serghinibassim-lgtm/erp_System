@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Search, CheckCircle, FileText } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Search, CheckCircle, FileText, RotateCcw } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 
 interface CreditClient {
@@ -25,6 +25,7 @@ export default function RecouvrementPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
+  const savedUnpaid = useRef<Record<string, { montant: number; nombre: number }>>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -54,9 +55,17 @@ export default function RecouvrementPage() {
       });
       if (res.ok) {
         const now = new Date().toISOString();
-        setClients(prev => prev.map(c =>
-          c.id === clientId ? { ...c, statut: "Payé", datePaiement: now } : c
-        ));
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          savedUnpaid.current[clientId] = { montant: client.unpaidTotal, nombre: client.nombreUnpaid };
+        }
+        setClients(prev => {
+          const updated = prev.map(c =>
+            c.id === clientId ? { ...c, statut: "Payé", datePaiement: now } : c
+          );
+          const moved = updated.find(c => c.id === clientId);
+          return moved ? [moved, ...updated.filter(c => c.id !== clientId)] : updated;
+        });
         setStats(prev => {
           const client = clients.find(c => c.id === clientId);
           if (!client) return prev;
@@ -67,6 +76,42 @@ export default function RecouvrementPage() {
             totalOverdue: client.statut === "En retard" ? Math.max(0, prev.totalOverdue - client.unpaidTotal) : prev.totalOverdue,
           };
         });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPaying(null);
+    }
+  };
+
+  const handleRendreImpaye = async (clientId: string) => {
+    setPaying(clientId);
+    try {
+      const res = await fetch("/api/recouvrement", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, paye: false }),
+      });
+      if (res.ok) {
+        const client = clients.find(c => c.id === clientId);
+        const saved = savedUnpaid.current[clientId] || { montant: client?.unpaidTotal || 0, nombre: client?.nombreUnpaid || 0 };
+        const enRetard = client?.dateLimitePaiement ? new Date(client.dateLimitePaiement) < new Date() : false;
+        setClients(prev => {
+          const updated = prev.map(c =>
+            c.id === clientId
+              ? { ...c, statut: enRetard ? "En retard" : "En attente", datePaiement: null, unpaidTotal: saved.montant, nombreUnpaid: saved.nombre }
+              : c
+          );
+          const moved = updated.find(c => c.id === clientId);
+          return moved ? [moved, ...updated.filter(c => c.id !== clientId)] : updated;
+        });
+        setStats(prev => ({
+          unpaidClients: prev.unpaidClients + 1,
+          unpaidInvoices: prev.unpaidInvoices + saved.nombre,
+          totalUnpaid: prev.totalUnpaid + saved.montant,
+          totalOverdue: enRetard ? prev.totalOverdue + saved.montant : prev.totalOverdue,
+        }));
+        delete savedUnpaid.current[clientId];
       }
     } catch (err) {
       console.error(err);
@@ -155,7 +200,7 @@ export default function RecouvrementPage() {
                       <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Date limite</th>
                       <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Reste impayé</th>
                       <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Statut</th>
-                      <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase w-52">Actions</th>
+                      <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="[&_tr:last-child]:border-0">
@@ -177,7 +222,11 @@ export default function RecouvrementPage() {
                         <tr key={c.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                           <td className="p-3 align-middle whitespace-nowrap text-sm font-medium">{c.nom}</td>
                           <td className="p-3 align-middle whitespace-nowrap text-sm">{dateLimite}</td>
-                          <td className="p-3 align-middle whitespace-nowrap text-sm font-bold text-red-600">{c.unpaidTotal.toFixed(2)} DH</td>
+                          <td className="p-3 align-middle whitespace-nowrap text-sm font-bold text-red-600">
+                            <span className={isPaye ? "line-through text-muted-foreground" : ""}>
+                              {(isPaye ? (savedUnpaid.current[c.id]?.montant ?? 0) : c.unpaidTotal).toFixed(2)} DH
+                            </span>
+                          </td>
                           <td className="p-3 align-middle whitespace-nowrap text-sm">
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statutColor}`}>
                               {c.statut}
@@ -185,8 +234,17 @@ export default function RecouvrementPage() {
                             </span>
                           </td>
                           <td className="p-3 align-middle whitespace-nowrap text-sm">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {!isPaye && (
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                              {isPaye ? (
+                                <button
+                                  onClick={() => handleRendreImpaye(c.id)}
+                                  disabled={paying === c.id}
+                                  className="inline-flex items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 h-7 text-xs font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                  {paying === c.id ? "..." : "Impayé"}
+                                </button>
+                              ) : (
                                 <button
                                   onClick={() => handleMarquerPaye(c.id)}
                                   disabled={paying === c.id}

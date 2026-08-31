@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Download } from "lucide-react";
+import { Download, AlertTriangle, CheckCircle } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 
 interface StockItem {
@@ -30,6 +30,7 @@ export default function StockPage() {
   const [maxQuantite, setMaxQuantite] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
+  const [showAlerts, setShowAlerts] = useState(false);
 
   const fetchStocks = useCallback(async () => {
     setLoading(true);
@@ -97,6 +98,33 @@ export default function StockPage() {
         </div>
       </div>
 
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          onClick={() => setShowAlerts(!showAlerts)}
+          disabled={alertCount === 0}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 h-10  font-semibold text-lg tracking-wide   whitespace-nowrap transition-all sm:w-auto disabled:pointer-events-none ${
+            alertCount > 0
+              ? "border border-red-200 bg-red-600 text-white hover:bg-red-700"
+              : "border border-green-200 bg-green-600 text-white"
+          }`}
+        >
+          {alertCount > 0 ? (
+            <>
+              <AlertTriangle className="h-4 w-4" />
+              {showAlerts ? "Masquer" : "Afficher"} les alertes ({alertCount})
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4" />
+              Pas d&apos;alerte de stock
+            </>
+          )}
+        </button>
+        <p className="hidden text-xs text-muted-foreground md:block">
+          Cliquer pour {showAlerts ? "masquer" : "afficher"} les produits en alerte
+        </p>
+      </div>
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <div className="rounded-lg border bg-card p-3 md:p-4">
           <p className="text-xs text-muted-foreground md:text-sm">Stock total</p>
@@ -116,7 +144,7 @@ export default function StockPage() {
         </div>
       </div>
 
-      {alertCount > 0 && (
+      {alertCount > 0 && showAlerts && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm">
           <p className="font-semibold mb-3">{alertCount} produit(s) en alerte de stock :</p>
           {Object.entries(alertsByCategory).map(([categorie, items]) => (

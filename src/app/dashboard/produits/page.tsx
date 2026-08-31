@@ -1,8 +1,8 @@
 "use client";
 
-import {useState, useEffect, useCallback, ChangeEvent} from "react";
+import {useState, useEffect, useCallback, ChangeEvent, useRef} from "react";
 import Link from "next/link";
-import {Download} from "lucide-react";
+import {Download, FileSpreadsheet, CheckCircle, AlertCircle} from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 import {useAuth} from "@/context/AuthContext";
 
@@ -33,9 +33,9 @@ export default function ProduitsPage() {
     const [recherche, setRecherche] = useState("");
     const [loading, setLoading] = useState(true);
     const [filtrParCtegories, setFiltrParCtegories] = useState("");
-
-
-    let all: string;
+    const [importing, setImporting] = useState(false);
+    const [importResult, setImportResult] = useState<{ success: boolean; message: string; results?: { produits: number; errors: string[] } } | null>(null);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     const fetchProduits = useCallback(async () => {
         setLoading(true);
@@ -76,6 +76,28 @@ export default function ProduitsPage() {
         fetchProduits();
     }, [fetchProduits]);
 
+    const handleImport = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setImporting(true);
+        setImportResult(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            const res = await fetch("/api/import", { method: "POST", body: formData });
+            const data = await res.json();
+            setImportResult(data);
+            if (data.success) fetchProduits();
+        } catch {
+            setImportResult({ success: false, message: "Erreur de connexion" });
+        } finally {
+            setImporting(false);
+            if (importInputRef.current) importInputRef.current.value = "";
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -84,25 +106,35 @@ export default function ProduitsPage() {
                     <p className="text-sm text-muted-foreground md:text-base">Gestion des produits et articles</p>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted h-7 gap-1 px-2.5 text-xs font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 gap-2"
-                        onClick={() => window.open("/api/export/produits/?format=csv")}
-                    >
-                        <Download className="h-4 w-4"/>
-                        CSV
-                    </button>
                     <button onClick={() => window.open("/api/export/produits/?format=xlsx")} disabled={loading}
                             className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted h-7 gap-1 px-2.5 text-xs font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 gap-2">
                         <Download className="h-4 w-4"/>
                         XLSX
                     </button>
                     {isResponsable && (
-                        <Link href="/dashboard/produits/nouveau">
+                        <>
+                            <input
+                                ref={importInputRef}
+                                type="file"
+                                accept=".xlsx,.xls"
+                                className="hidden"
+                                onChange={handleImport}
+                            />
                             <button
-                                className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">Nouveau
-                                produit
+                                onClick={() => importInputRef.current?.click()}
+                                disabled={importing}
+                                className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted h-7 gap-1 px-2.5 text-xs font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0"
+                            >
+                                <FileSpreadsheet className="h-4 w-4"/>
+                                {importing ? "Import..." : "Importer XLSX"}
                             </button>
-                        </Link>
+                            <Link href="/dashboard/produits/nouveau">
+                                <button
+                                    className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 w-full sm:w-auto">Nouveau
+                                    produit
+                                </button>
+                            </Link>
+                        </>
                     )}
                 </div>
             </div>
@@ -137,6 +169,23 @@ export default function ProduitsPage() {
                 </div>
             </div>
 
+            {importResult && (
+                <div className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${importResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+                    {importResult.success ? (
+                        <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600"/>
+                    ) : (
+                        <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-red-600"/>
+                    )}
+                    <div>
+                        <p className="font-medium">{importResult.message}</p>
+                        {importResult.results && importResult.results.errors.length > 0 && (
+                            <ul className="mt-1 list-inside list-disc text-red-600 text-xs">
+                                {importResult.results.errors.map((err, i) => <li key={i}>{err}</li>)}
+                            </ul>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <div className="relative w-full overflow-x-auto rounded-md border">
                 <table className="w-full caption-bottom text-base border-collapse">
