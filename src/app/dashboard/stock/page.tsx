@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Download, AlertTriangle, CheckCircle } from "lucide-react";
+import { Download, AlertTriangle, X } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 
 interface StockItem {
@@ -30,7 +30,7 @@ export default function StockPage() {
   const [maxQuantite, setMaxQuantite] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
-  const [showAlerts, setShowAlerts] = useState(false);
+  const [notification, setNotification] = useState(false);
 
   const fetchStocks = useCallback(async () => {
     setLoading(true);
@@ -80,55 +80,19 @@ export default function StockPage() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Stock</h1>
           <p className="text-sm text-muted-foreground md:text-base">État des stocks et alertes</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 gap-2"
-            onClick={() => window.open("/api/export/stock?format=csv")}
-          >
-            <Download className="h-4 w-4" />
-            CSV
-          </button>
-          <button
-            className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 gap-2"
-            onClick={() => window.open("/api/export/stock?format=xlsx")}
-          >
-            <Download className="h-4 w-4" />
-            XLSX
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <button
-          onClick={() => setShowAlerts(!showAlerts)}
-          disabled={alertCount === 0}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 h-10  font-semibold text-lg tracking-wide   whitespace-nowrap transition-all sm:w-auto disabled:pointer-events-none ${
-            alertCount > 0
-              ? "border border-red-200 bg-red-600 text-white hover:bg-red-700"
-              : "border border-green-200 bg-green-600 text-white"
-          }`}
+          className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 gap-2"
+          onClick={() => window.open("/api/export/stock?format=xlsx")}
         >
-          {alertCount > 0 ? (
-            <>
-              <AlertTriangle className="h-4 w-4" />
-              {showAlerts ? "Masquer" : "Afficher"} les alertes ({alertCount})
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4" />
-              Pas d&apos;alerte de stock
-            </>
-          )}
+          <Download className="h-4 w-4" />
+          Télécharger XLSX
         </button>
-        <p className="hidden text-xs text-muted-foreground md:block">
-          Cliquer pour {showAlerts ? "masquer" : "afficher"} les produits en alerte
-        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <div className="rounded-lg border bg-card p-3 md:p-4">
-          <p className="text-xs text-muted-foreground md:text-sm">Stock total</p>
-          <p className="text-lg font-bold md:text-2xl text-blue-600">{totalStock}</p>
+          <p className="text-xs text-muted-foreground font-sans md:text-sm">Stock total</p>
+          <p className="text-lg font-bold  font-inter md:text-2xl text-blue-600">{totalStock}</p>
         </div>
         <div className="rounded-lg border bg-card p-3 md:p-4">
           <p className="text-xs text-muted-foreground md:text-sm">Valeur de stock</p>
@@ -143,24 +107,6 @@ export default function StockPage() {
           <p className={`text-lg font-bold md:text-2xl ${totalMargin >= 0 ? "text-green-600" : "text-red-600"}`}>{totalMargin.toFixed(2)} DH</p>
         </div>
       </div>
-
-      {alertCount > 0 && showAlerts && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm">
-          <p className="font-semibold mb-3">{alertCount} produit(s) en alerte de stock :</p>
-          {Object.entries(alertsByCategory).map(([categorie, items]) => (
-            <div key={categorie} className="mb-3 last:mb-0">
-              <p className="font-medium text-red-700 mb-1.5">{categorie}</p>
-              <ul className="list-disc pl-5 space-y-1">
-                {items.map(s => (
-                  <li key={s.id}>
-                    <span className="font-medium">{s.produit.code} - {s.produit.designation}</span> : <span className="font-bold">{s.stockActuel}</span> restants (Seuil min : {s.produit.stockMin})
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <input
@@ -188,6 +134,19 @@ export default function StockPage() {
         </div>
       </div>
 
+      <div className="space-y-2">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setNotification(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 shadow-sm transition-all cursor-pointer hover:bg-red-100 dark:border-red-800 dark:bg-red-950/20 dark:hover:bg-red-950/40"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span>Alertes de stock</span>
+            <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white ${alertCount > 0 ? "bg-red-500" : "bg-muted-foreground/50"}`}>
+              {alertCount}
+            </span>
+          </button>
+        </div>
       <div className="relative w-full overflow-x-auto rounded-md border">
         <table className="w-full caption-bottom text-base border-collapse">
           <thead className="[&_tr]:border-b">
@@ -196,7 +155,7 @@ export default function StockPage() {
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Stock initial</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Achats</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Ventes</th>
-              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 cursor-pointer select-none hover:bg-muted/50" onClick={toggleSort}>Stock actuel{sortOrder === "asc" ? " ↑" : " ↓"}</th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 cursor-pointer select-none hover:bg-muted/50" onClick={toggleSort}>Stock actuel{sortOrder === "asc" ? <span className="text-emerald-500"> ↑</span> : <span className="text-red-500"> ↓</span>}</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Seuil min</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Statut</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Coût</th>
@@ -238,6 +197,60 @@ export default function StockPage() {
           </tbody>
         </table>
       </div>
+      </div>
+
+      {notification && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setNotification(false)}>
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-card text-card-foreground shadow-xl ring-1 ring-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/60 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15 text-red-600">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">Alertes de stock</h2>
+                  <p className="text-sm text-muted-foreground">{alertCount} produit(s) sous le seuil minimum</p>
+                </div>
+              </div>
+              <button onClick={() => setNotification(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
+              {alertCount === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">Aucune alerte de stock.</p>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(alertsByCategory).map(([categorie, items]) => (
+                    <section key={categorie}>
+                      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-red-600">{categorie}</h3>
+                      <ul className="space-y-2">
+                        {items.map(s => (
+                          <li key={s.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3">
+                            <div>
+                              <p className="text-sm font-semibold">{s.produit.code} - {s.produit.designation}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {s.stockActuel} restants • Seuil min : {s.produit.stockMin}
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-sm font-bold text-red-700">
+                              {s.stockActuel}/{s.produit.stockMin}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -52,7 +52,7 @@ export default function ProduitsPage() {
                         setCategorie(listcategorie);
                     }
                 } else {
-                    console.log(' err dna la recuperation des categorie')
+                    console.log('Erreur dans la récupération des catégories')
                 }
             } catch (err) {
                 console.error(err);
@@ -159,7 +159,7 @@ export default function ProduitsPage() {
                             className={'flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm border-input'}
 
                     >
-                        <option value="">toute les  catégorie</option>
+                        <option value="">Toutes les catégories</option>
                         {
                             categorie?.map(c => (
                                 <option key={categorie.indexOf(c)} value={c}>{c}</option>

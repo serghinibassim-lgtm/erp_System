@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { AlertTriangle, X } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 
 interface Vente {
@@ -17,6 +18,23 @@ interface Vente {
   client: { nom: string } | null;
 }
 
+interface AlertePrix {
+  id: string;
+  type: "achat" | "vente";
+  date: string;
+  produit: { code: string; designation: string; prixAchatRef?: number; prixVenteRef?: number };
+  contrepartie: string | null;
+  prixUnitaire: number;
+  prixRef: number;
+  ecart: number;
+}
+
+interface AlertesData {
+  total: number;
+  ventes: AlertePrix[];
+  achats: AlertePrix[];
+}
+
 export default function VentesPage() {
   const [ventes, setVentes] = useState<Vente[]>([]);
   const [recherche, setRecherche] = useState("");
@@ -27,6 +45,8 @@ export default function VentesPage() {
   const [sortField, setSortField] = useState<"date" | "quantite">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
+  const [alertes, setAlertes] = useState<AlertesData | null>(null);
+  const [notification, setNotification] = useState(false);
 
   const fetchVentes = useCallback(async () => {
     setLoading(true);
@@ -50,6 +70,16 @@ export default function VentesPage() {
 
   useEffect(() => { fetchVentes(); }, [fetchVentes]);
 
+  useEffect(() => {
+    fetch("/api/alertes-prix")
+      .then(async (r) => {
+        const json = await r.json();
+        if (!r.ok || json.error) throw new Error(json.error || "Erreur");
+        setAlertes(json);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
   const toggleSort = (field: "date" | "quantite") => {
     if (sortField === field) {
       setSortOrder(o => o === "asc" ? "desc" : "asc");
@@ -67,7 +97,9 @@ export default function VentesPage() {
 
   const sortIndicator = (field: "date" | "quantite") => {
     if (sortField !== field) return " ↕";
-    return sortOrder === "asc" ? " ↑" : " ↓";
+    return sortOrder === "asc"
+      ? <span className="text-emerald-500"> ↑</span>
+      : <span className="text-red-500"> ↓</span>;
   };
 
   return (
@@ -123,7 +155,20 @@ export default function VentesPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
+      <div className="space-y-2">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setNotification(true)}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 shadow-sm transition-all cursor-pointer hover:bg-red-100 dark:border-red-800 dark:bg-red-950/20 dark:hover:bg-red-950/40"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span>Alertes de prix</span>
+            <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white ${alertes && alertes.ventes.length > 0 ? "bg-red-500" : "bg-muted-foreground/50"}`}>
+              {alertes ? alertes.ventes.length : "…"}
+            </span>
+          </button>
+        </div>
+        <div className="overflow-x-auto rounded-md border">
         <div className="relative w-full overflow-x-auto">
           <table className="w-full caption-bottom text-base border-collapse">
             <thead className="[&_tr]:border-b">
@@ -181,7 +226,59 @@ export default function VentesPage() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
+
+      {notification && alertes && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setNotification(false)}>
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-card text-card-foreground shadow-xl ring-1 ring-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/60 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15 text-red-600">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">Alertes de prix</h2>
+                  <p className="text-sm text-muted-foreground">{alertes.ventes.length} alerte(s) de vente détectée(s)</p>
+                </div>
+              </div>
+              <button onClick={() => setNotification(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
+              {alertes.ventes.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">Aucune alerte de prix enregistrée.</p>
+              ) : (
+                <div className="space-y-6">
+                  <section>
+                    <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-red-600">Vendu en dessous du prix de référence</h3>
+                    <ul className="space-y-2">
+                      {alertes.ventes.map((a) => (
+                        <li key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3">
+                          <div>
+                            <p className="text-sm font-semibold">{a.produit.code} - {a.produit.designation}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Vendu à {a.prixUnitaire.toFixed(2)} MAD (réf. {a.prixRef.toFixed(2)} MAD) • {a.contrepartie || "Client N/A"} • {new Date(a.date).toLocaleDateString("fr-FR")}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-sm font-bold text-red-700">
+                            -{a.ecart.toFixed(2)} MAD
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { jwtVerify } from "jose/jwt/verify";
 import type { NextRequest } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "arp-secret-key-change-in-production"
+  process.env.JWT_SECRET || "erp-secret-key-change-in-production"
 );
 
 export interface JwtPayload {

@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const JWT_SECRET = process.env.JWT_SECRET || "arp-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || "erp-secret-key-change-in-production";
 
 export interface JwtPayload {
   userId: string;

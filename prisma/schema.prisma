@@ -133,6 +133,15 @@ model Parametre {
   @@map("parametres")
 }
 
+model Sequence {
+  cle      String @id
+  prefixe  String
+  annee    Int
+  dernierN Int    @default(0)
+
+  @@map("sequences")
+}
+
 model HistoriquePrix {
   id               String    @id @default(cuid())
   produitId        String    @map("produit_id")

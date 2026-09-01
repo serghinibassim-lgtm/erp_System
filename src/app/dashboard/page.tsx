@@ -101,7 +101,7 @@ const formatMAD = (val: number) => `${val.toFixed(2)} MAD`;
     { title: "Quantité en stock", value: data.stockTotal, subtitle: "Unités disponibles", icon: Package, color: "text-cyan-500", bg: "bg-cyan-500/10" },
     { title: "Valeur du stock", value: formatCurrency(data.valeurTotale), subtitle: "Coût d'achat global", icon: DollarSign, color: "text-indigo-500", bg: "bg-indigo-500/10" },
     { title: "Marge potentielle", value: formatCurrency(data.margeTotale), subtitle: "Bénéfice estimé", icon: TrendingUp, color: "text-violet-500", bg: "bg-violet-500/10" },
-    { title: "Chiffre d'Affaires", value: formatCurrency(data.totalVentesMontant), subtitle: "Total des ventes", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10", trend: ventesTrend, trendLabel: "vs mois dernier" },
+    { title: "Chiffre d'affaires", value: formatCurrency(data.totalVentesMontant), subtitle: "Total des ventes", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10", trend: ventesTrend, trendLabel: "vs mois dernier" },
     { title: "Achats Fournisseurs", value: formatCurrency(data.totalAchatsMontant), subtitle: "Total des achats", icon: ShoppingCart, color: "text-orange-500", bg: "bg-orange-500/10", trend: achatsTrend, trendLabel: "vs mois dernier" },
     { title: "Clients Actifs", value: data.totalClients, subtitle: "Base clients", icon: Users, color: "text-pink-500", bg: "bg-pink-500/10" },
     { title: "Alertes stock", value: data.stockAlerte, subtitle: "À réapprovisionner", icon: AlertTriangle, color: "text-red-500", bg: "bg-red-500/10" },
@@ -128,14 +128,14 @@ const formatMAD = (val: number) => `${val.toFixed(2)} MAD`;
         {cards.map((card) => {
           const valueColor = card.title === "Alertes stock"
             ? "text-red-500"
-            : card.title === "Chiffre d'Affaires" || card.title === "Marge potentielle"
+            : card.title === "Chiffre d'affaires" || card.title === "Marge potentielle"
               ? "text-emerald-500"
               : "text-foreground";
           return (
             <div key={card.title} className="flex flex-col rounded-2xl bg-card p-6 text-card-foreground shadow-sm ring-1 ring-border">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{card.title}</h3>
               <div className="mt-4 flex flex-col gap-1">
-                <p className={`text-3xl font-extrabold tracking-tight ${valueColor}`}>{card.value}</p>
+                <p className={`text-3xl  font-inter font-semibold tracking-tight ${valueColor}`}>{card.value}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {card.trend && (
                     <span className={`inline-flex items-center text-xs font-semibold ${card.trend.color}`}>
@@ -188,7 +188,7 @@ const formatMAD = (val: number) => `${val.toFixed(2)} MAD`;
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 13 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 13 }} axisLine={false} tickLine={false} tickFormatter={(val) => `${val} DHS`} />
+                  <YAxis tick={{ fontSize: 13 }} axisLine={false} tickLine={false} tickFormatter={(val) => `${val} DH`} />
                   <Tooltip cursor={{ fill: "transparent" }} contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
                   <Bar dataKey="value" fill="var(--color-primary)" radius={[6, 6, 0, 0]} maxBarSize={60} />
                 </BarChart>

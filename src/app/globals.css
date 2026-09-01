@@ -145,3 +145,13 @@
     font-size: 16px;
   }
 }
+
+
+
+@theme {
+  /* Remplace la police sans-serif par défaut de Tailwind */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Classe utilitaire dédiée font-inter (Inter) */
+  --font-inter: "Inter", system-ui, sans-serif;
+}

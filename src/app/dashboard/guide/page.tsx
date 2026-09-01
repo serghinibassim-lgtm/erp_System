@@ -32,8 +32,8 @@ export default function GuidePage() {
       <Section title="1. Connexion">
         <p>Rendez-vous sur la page de connexion. Utilisez l&apos;email et le mot de passe fournis par votre administrateur.</p>
         <ul>
-          <li><strong>Responsable :</strong> responsable@arp.com / resp123</li>
-          <li><strong>Employé :</strong> employer@arp.com / emp123</li>
+          <li><strong>Responsable :</strong> responsable@erp.com / resp123</li>
+          <li><strong>Employé :</strong> employer@erp.com / emp123</li>
         </ul>
       </Section>
 

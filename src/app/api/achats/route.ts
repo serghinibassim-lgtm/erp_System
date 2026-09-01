@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getNextNumeroDocument } from "@/lib/sequence";
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { date, numeroDocument, fournisseurId, modePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
+    let { date, numeroDocument, fournisseurId, modePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
 
     // Support both single item and lineItems array
     const items = lineItems || [{ produitId, quantite, prixUnitaire, montantTotal }];
@@ -84,6 +85,11 @@ export async function POST(request: Request) {
 
     if (Object.keys(errors).length > 0) {
       return NextResponse.json({ error: "Validation échouée", errors }, { status: 400 });
+    }
+
+    const dateDoc = date ? new Date(date) : new Date();
+    if (!numeroDocument) {
+      numeroDocument = await prisma.$transaction((tx) => getNextNumeroDocument(tx, "achat", dateDoc));
     }
 
     const achats: unknown[] = [];
@@ -109,7 +115,7 @@ export async function POST(request: Request) {
       const achat = await prisma.$transaction(async (tx) => {
         const newAchat = await tx.achat.create({
           data: {
-            date: date ? new Date(date) : new Date(),
+            date: dateDoc,
             numeroDocument: numeroDocument || null,
             fournisseurId: fournisseurId || null,
             produitId: item.produitId,
@@ -150,7 +156,7 @@ export async function POST(request: Request) {
       achats.push(achat);
     }
 
-    return NextResponse.json({ achats, count: achats.length }, { status: 201 });
+    return NextResponse.json({ achats, count: achats.length, numeroDocument }, { status: 201 });
   } catch (err) {
     console.error("Achats POST error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

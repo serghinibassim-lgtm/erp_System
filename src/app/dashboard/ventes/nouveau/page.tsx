@@ -30,7 +30,6 @@ export default function NouvelleVentePage() {
   const [produits, setProduits] = useState<ProductOption[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [numeroVente, setNumeroVente] = useState("");
   const [clientId, setClientId] = useState("");
   const [modePaiement, setModePaiement] = useState("");
   const [dateLimitePaiement, setDateLimitePaiement] = useState("");
@@ -106,7 +105,6 @@ export default function NouvelleVentePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: new Date(date).toISOString(),
-          numeroVente: numeroVente || undefined,
           clientId: clientId || undefined,
           modePaiement: modePaiement || undefined,
           dateLimitePaiement: modePaiement === "Crédit" && dateLimitePaiement ? new Date(dateLimitePaiement).toISOString() : undefined,
@@ -120,8 +118,7 @@ export default function NouvelleVentePage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const docNum = numeroVente || `VENTE-${Date.now()}`;
-        setCreatedDocNum(docNum);
+        setCreatedDocNum(data.numeroVente || `VENTE-${Date.now()}`);
       } else {
         setError(data.error || "Erreur");
         if (data.errors) setFieldErrors(data.errors);
@@ -162,7 +159,6 @@ export default function NouvelleVentePage() {
               onClick={() => {
                 setCreatedDocNum(null);
                 setLineItems([{ key: crypto.randomUUID?.() || "1", produitId: "", quantite: "1", prixUnitaire: "", montantTotal: "" }]);
-                setNumeroVente("");
                 setClientId("");
                 setModePaiement("");
                 setDateLimitePaiement("");
@@ -209,12 +205,7 @@ export default function NouvelleVentePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor="numeroVente" className="flex items-center gap-2 text-base leading-none font-medium select-none">N° vente</label>
-                <input id="numeroVente" placeholder="V-001" value={numeroVente} onChange={(e) => setNumeroVente(e.target.value)} className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
-              </div>
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement</label>
                 <select id="modePaiement" value={modePaiement} onChange={(e) => { setModePaiement(e.target.value); if (e.target.value !== "Crédit") setDateLimitePaiement(""); }} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
                   <option value="">Sélectionner</option>
@@ -230,7 +221,6 @@ export default function NouvelleVentePage() {
                   <input id="dateLimitePaiement" type="date" value={dateLimitePaiement} onChange={(e) => setDateLimitePaiement(e.target.value)} required className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
                 </div>
               )}
-              </div>
             </div>
 
             <div className="space-y-2">

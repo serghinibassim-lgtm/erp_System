@@ -123,7 +123,7 @@ export default function RecouvrementPage() {
   const openWhatsApp = (phone: string, nom: string, montant: number) => {
     const cleaned = phone.replace(/[^0-9]/g, "");
     const message = encodeURIComponent(
-      `Bonjour ${nom},\n\nNous vous contactons concernant votre crédit d'un montant de ${montant.toFixed(2)} DH qui est actuellement impayé.\n\nMerci de bien vouloir régulariser votre situation dans les plus brefs délais.\n\nCordialement, ARP Magasin`
+      `Bonjour ${nom},\n\nNous vous contactons concernant votre crédit d'un montant de ${montant.toFixed(2)} DH qui est actuellement impayé.\n\nMerci de bien vouloir régulariser votre situation dans les plus brefs délais.\n\nCordialement, ERP Magasin`
     );
     window.open(`https://wa.me/${cleaned}?text=${message}`, "_blank");
   };

@@ -70,7 +70,7 @@ const faqs = [
 export default function VitrinePage() {
   return (
     <div className="w-full">
-      {/* 1. Hero Section */}
+
       <section className="w-full px-4 py-24 sm:py-32 flex flex-col items-center text-center space-y-8 bg-gradient-to-b from-primary/10 via-background to-background">
         <div className="mx-auto w-full max-w-4xl flex flex-col items-center space-y-8">
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground w-full leading-tight">
@@ -100,7 +100,7 @@ export default function VitrinePage() {
         </div>
       </section>
 
-      {/* 2. Problème vs Solution */}
+
       <Reveal className="w-full">
         <section className="w-full bg-background py-24">
           <div className="mx-auto w-full max-w-6xl px-4 text-center">
@@ -136,7 +136,7 @@ export default function VitrinePage() {
         </section>
       </Reveal>
 
-      {/* 3. Fonctionnalités clés */}
+
       <Reveal className="w-full">
         <section className="w-full bg-gradient-to-b from-muted/20 to-background py-24">
           <div className="mx-auto w-full max-w-6xl px-4 text-center">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getNextNumeroDocument } from "@/lib/sequence";
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { date, numeroVente, clientId, modePaiement, dateLimitePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
+    let { date, numeroVente, clientId, modePaiement, dateLimitePaiement, observation, lineItems, produitId, quantite, prixUnitaire, montantTotal } = body;
 
     const items = lineItems || [{ produitId, quantite, prixUnitaire, montantTotal }];
 
@@ -83,6 +84,11 @@ export async function POST(request: Request) {
 
     if (Object.keys(errors).length > 0) {
       return NextResponse.json({ error: "Validation échouée", errors }, { status: 400 });
+    }
+
+    const dateDoc = date ? new Date(date) : new Date();
+    if (!numeroVente) {
+      numeroVente = await prisma.$transaction((tx) => getNextNumeroDocument(tx, "vente", dateDoc));
     }
 
     const ventes: unknown[] = [];
@@ -119,7 +125,7 @@ export async function POST(request: Request) {
       const vente = await prisma.$transaction(async (tx) => {
         const newVente = await tx.vente.create({
           data: {
-            date: date ? new Date(date) : new Date(),
+            date: dateDoc,
             numeroVente: numeroVente || null,
             clientId: clientId || null,
             produitId: item.produitId,
@@ -161,7 +167,7 @@ export async function POST(request: Request) {
       ventes.push(vente);
     }
 
-    return NextResponse.json({ ventes, count: ventes.length }, { status: 201 });
+    return NextResponse.json({ ventes, count: ventes.length, numeroVente }, { status: 201 });
   } catch (err) {
     console.error("Ventes POST error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

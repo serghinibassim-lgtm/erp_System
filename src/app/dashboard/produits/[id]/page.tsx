@@ -11,7 +11,7 @@ interface HistoriquePrix {
   nouveauPrixAchat: number | null;
   ancienPrixVente: number | null;
   nouveauPrixVente: number | null;
-  dateChangement: string;
+  dateModification: string;
   raison: string | null;
 }
 
@@ -321,7 +321,7 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
                 <tbody className="[&_tr:last-child]:border-0">
                   {produit.historiquePrix.map((h) => (
                     <tr key={h.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                      <td className="p-3 align-middle whitespace-nowrap text-sm">{new Date(h.dateChangement).toLocaleDateString("fr-FR")}</td>
+                      <td className="p-3 align-middle whitespace-nowrap text-sm">{new Date(h.dateModification).toLocaleDateString("fr-FR")}</td>
                       <td className="p-3 align-middle whitespace-nowrap text-sm">{h.ancienPrixAchat != null ? Number(h.ancienPrixAchat).toFixed(2) : "-"}</td>
                       <td className="p-3 align-middle whitespace-nowrap text-sm">{h.nouveauPrixAchat != null ? Number(h.nouveauPrixAchat).toFixed(2) : "-"}</td>
                       <td className="p-3 align-middle whitespace-nowrap text-sm">{h.ancienPrixVente != null ? Number(h.ancienPrixVente).toFixed(2) : "-"}</td>

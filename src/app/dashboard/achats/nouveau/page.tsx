@@ -29,7 +29,6 @@ export default function NouvelAchatPage() {
   const [produits, setProduits] = useState<ProductOption[]>([]);
   const [fournisseurs, setFournisseurs] = useState<SupplierOption[]>([]);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [numeroDocument, setNumeroDocument] = useState("");
   const [fournisseurId, setFournisseurId] = useState("");
   const [modePaiement, setModePaiement] = useState("");
   const [observation, setObservation] = useState("");
@@ -99,7 +98,6 @@ export default function NouvelAchatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: new Date(date).toISOString(),
-          numeroDocument: numeroDocument || undefined,
           fournisseurId: fournisseurId || undefined,
           modePaiement: modePaiement || undefined,
           observation: observation || undefined,
@@ -112,8 +110,7 @@ export default function NouvelAchatPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const docNum = numeroDocument || `ACHAT-${Date.now()}`;
-        setCreatedDocNum(docNum);
+        setCreatedDocNum(data.numeroDocument || `ACHAT-${Date.now()}`);
       } else {
         setError(data.error || "Erreur");
         if (data.errors) setFieldErrors(data.errors);
@@ -154,7 +151,6 @@ export default function NouvelAchatPage() {
               onClick={() => {
                 setCreatedDocNum(null);
                 setLineItems([{ key: crypto.randomUUID?.() || "1", produitId: "", quantite: "1", prixUnitaire: "", montantTotal: "" }]);
-                setNumeroDocument("");
                 setFournisseurId("");
                 setModePaiement("");
                 setObservation("");
@@ -200,12 +196,7 @@ export default function NouvelAchatPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor="numeroDocument" className="flex items-center gap-2 text-base leading-none font-medium select-none">N° document</label>
-                <input id="numeroDocument" placeholder="BL-001" value={numeroDocument} onChange={(e) => setNumeroDocument(e.target.value)} className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
-              </div>
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement</label>
                 <select id="modePaiement" value={modePaiement} onChange={(e) => setModePaiement(e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
                   <option value="">Sélectionner</option>
@@ -215,7 +206,6 @@ export default function NouvelAchatPage() {
                   <option value="Carte">Carte</option>
                   <option value="Crédit">Crédit</option>
                 </select>
-              </div>
             </div>
 
             <div className="space-y-2">
