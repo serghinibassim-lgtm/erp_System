@@ -25,6 +25,8 @@
 .DS_Store
 *.pem
 
+/.agents
+/.neon
 # debug
 npm-debug.log*
 yarn-debug.log*
