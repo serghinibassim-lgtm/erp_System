@@ -1,4 +1,4 @@
-# ERP System & Gestion Magasin
+# MagasinPilot & Gestion Magasin
 
 Application de gestion de stock et de magasin avec contrôle des prix.
 

@@ -47,7 +47,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="flex w-full max-w-sm flex-col rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10">
         <div className="flex flex-col gap-1 px-4 pt-4 text-center">
-          <h2 className="text-lg font-semibold leading-snug">ERP Gestion Magasin</h2>
+          <h2 className="text-lg font-semibold leading-snug">MagasinPilot</h2>
           <p className="text-sm text-muted-foreground">Créez votre compte responsable</p>
         </div>
         <div className="px-4 pb-4">

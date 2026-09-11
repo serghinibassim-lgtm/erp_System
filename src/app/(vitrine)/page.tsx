@@ -95,7 +95,7 @@ export default function VitrinePage() {
 
         <div className="w-full max-w-5xl pt-8">
           <div className="rounded-2xl border bg-card p-2 shadow-2xl">
-            <img src="/dashbordScren.png" alt="Capture du tableau de bord ERP Magasin" className="w-full rounded-xl object-cover" />
+            <img src="/dashbordScren.png" alt="Capture du tableau de bord MagasinPilot" className="w-full rounded-xl object-cover" />
           </div>
         </div>
       </section>
@@ -121,7 +121,7 @@ export default function VitrinePage() {
               </div>
               <div className="rounded-2xl border border-green-200 bg-green-50/50 p-8">
                 <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5" /> Avec ERP Magasin
+                  <CheckCircle2 className="h-5 w-5" /> Avec MagasinPilot
                 </h3>
                 <ul className="space-y-3 text-muted-foreground">
                   <li className="flex gap-2"><span className="text-green-600">✓</span> Données fiables et automatiques</li>

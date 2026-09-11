@@ -54,8 +54,8 @@ export default function Sidebar() {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-4 border-b px-6 py-6">
-        <img src="/erp.png" alt="ERP" className="h-12 w-12 rounded-xl object-cover shadow-md" />
-        <span className="text-2xl font-extrabold tracking-tight text-foreground">ERP magasin</span>
+        <img src="/erp.png" alt="MagasinPilot" className="h-12 w-12 rounded-xl object-cover shadow-md" />
+        <span className="text-2xl font-extrabold tracking-tight text-foreground">MagasinPilot</span>
       </div>
 
       <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-8">

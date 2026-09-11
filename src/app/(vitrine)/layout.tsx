@@ -14,7 +14,7 @@ const socials = [
   },
   {
     label: "Gmail",
-    href: "mailto:contact@erpmagasin.com",
+    href: "mailto:contact@magasinpilot.com",
     src: "/gmail-2026.svg",
   },
 ];
@@ -25,8 +25,8 @@ export default function VitrineLayout({ children }: { children: React.ReactNode 
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <img src="/erp.png" alt="ERP" className="h-10 w-10 rounded-xl object-cover shadow-sm" />
-            <span className="text-xl font-bold tracking-tight">ERP Magasin</span>
+            <img src="/erp.png" alt="MagasinPilot" className="h-10 w-10 rounded-xl object-cover shadow-sm" />
+            <span className="text-xl font-bold tracking-tight">MagasinPilot</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/login" className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">

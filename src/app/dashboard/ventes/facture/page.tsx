@@ -69,7 +69,7 @@ function FactureVenteContent() {
     pdf.text(`N° ${document.numeroVente}`, 14, 28);
 
     pdf.setFontSize(10);
-    pdf.text("ERP Magasin", 196, 20, { align: "right" });
+    pdf.text("MagasinPilot", 196, 20, { align: "right" });
     pdf.text(`Date: ${dateStr}`, 196, 28, { align: "right" });
 
     let y = 40;
@@ -171,7 +171,7 @@ function FactureVenteContent() {
             <p className="text-muted-foreground">N° {document.numeroVente}</p>
           </div>
           <div className="text-right">
-            <p className="font-bold text-lg">ERP Magasin</p>
+            <p className="font-bold text-lg">MagasinPilot</p>
             <p className="text-sm text-muted-foreground">Date: {dateStr}</p>
           </div>
         </div>

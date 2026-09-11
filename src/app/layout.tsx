@@ -5,8 +5,8 @@ import { Inter } from "next/font/google";
 
 
 export const metadata: Metadata = {
-  title: "ERP Gestion Magasin",
-  description: "Application de gestion de stock et de magasin",
+  title: "MagasinPilot",
+  description: "MagasinPilot - Application de gestion de stock et de magasin",
   icons:{
     icon:"/erp.png",
     shortcut:"/erp.png"

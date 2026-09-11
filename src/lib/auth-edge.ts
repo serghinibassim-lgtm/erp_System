@@ -15,7 +15,7 @@ export interface JwtPayload {
 export async function signTokenEdge(payload: JwtPayload): Promise<string> {
   return new SignJWT(payload as unknown as Record<string, unknown>)
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
+    .setExpirationTime("8h")
     .sign(JWT_SECRET);
 }
 
