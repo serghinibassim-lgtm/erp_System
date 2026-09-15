@@ -7,12 +7,25 @@ export async function GET(request: NextRequest) {
   if ("error" in auth) return auth.error;
 
   try {
-    const utilisateurs = await prisma.utilisateur.findMany({
-      select: { id: true, nom: true, email: true, role: true, creeLe: true },
-      orderBy: { creeLe: "asc" },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ utilisateurs });
+    const [utilisateurs, total] = await Promise.all([
+      prisma.utilisateur.findMany({
+        select: { id: true, nom: true, email: true, role: true, creeLe: true },
+        orderBy: { creeLe: "asc" },
+        skip,
+        take: limit,
+      }),
+      prisma.utilisateur.count(),
+    ]);
+
+    return NextResponse.json({
+      utilisateurs,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     console.error("List users error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

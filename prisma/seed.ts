@@ -38,6 +38,10 @@ async function main() {
   const f3 = await prisma.fournisseur.create({ data: { code: 'F003', nom: 'Mobilier Plus', telephone: '0600000003', adresse: 'Marrakech', ice: 'ICE345678' } });
   const f4 = await prisma.fournisseur.create({ data: { code: 'F004', nom: 'Papeterie Moderne', telephone: '0600000004', adresse: 'Fès', ice: 'ICE456789' } });
   const f5 = await prisma.fournisseur.create({ data: { code: 'F005', nom: 'Équipements Direct', telephone: '0600000005', adresse: 'Tanger', ice: 'ICE567890' } });
+for(let i=6;i<30;i++){
+  const f = await prisma.fournisseur.create({ data: { code: 'F00'+i, nom: 'Tech Grossiste_'+i, telephone: i<10?'060000000'+i:'06000000'+i, adresse: 'Casablanca+'+i, ice: 'ICE12345'+i } });
+}
+
 
   // 5. Clients (6)
   console.log('👥 Création des clients...');
@@ -58,7 +62,10 @@ async function main() {
   const p6 = await prisma.produit.create({ data: { code: 'P-CHAISE-01', designation: 'Chaise de Bureau', categorie: 'Mobilier', unite: 'Pièce', prixAchatRef: 800, prixVenteRef: 1500, stockInitial: 20, stockMin: 10 } });
   const p7 = await prisma.produit.create({ data: { code: 'P-CLE-USB-01', designation: 'Clé USB 32Go', categorie: 'Accessoires', unite: 'Pièce', prixAchatRef: 50, prixVenteRef: 100, stockInitial: 500, stockMin: 100 } });
   const p8 = await prisma.produit.create({ data: { code: 'P-IMPR-01', designation: 'Imprimante Laser', categorie: 'Informatique', unite: 'Pièce', prixAchatRef: 3000, prixVenteRef: 4500, stockInitial: 4, stockMin: 3 } });
+for (let i=9;i<50;i++){
+  const p = await prisma.produit.create({ data: { code: 'P-CLE-USB-0'+i, designation: 'Clé USB 32Go_'+i, categorie: 'Accessoires_'+i, unite: 'Pièce', prixAchatRef: 50+i, prixVenteRef: 100+i, stockInitial: 10*i, stockMin: i } });
 
+}
   // ────────────────────────────────────────────────────────────
   // 7. Achats (7)
   // ────────────────────────────────────────────────────────────

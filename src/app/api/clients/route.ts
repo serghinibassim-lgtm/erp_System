@@ -5,7 +5,9 @@ import { requireRole } from "@/lib/auth";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(100, parseInt(searchParams.get("limit") || "50"));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
+    const skip = (page - 1) * limit;
     const recherche = searchParams.get("search") || "";
 
     const where: Record<string, unknown> = {};
@@ -16,13 +18,20 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const clients = await prisma.client.findMany({
-      where,
-      take: limit,
-      orderBy: { nom: "asc" },
-    });
+    const [clients, total] = await Promise.all([
+      prisma.client.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { nom: "asc" },
+      }),
+      prisma.client.count({ where }),
+    ]);
 
-    return NextResponse.json({ clients });
+    return NextResponse.json({
+      clients,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     console.error("Clients GET error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

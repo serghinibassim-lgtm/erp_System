@@ -1,4 +1,4 @@
-import { SignJWT } from "jose/jwt/sign";
+      import { SignJWT } from "jose/jwt/sign";
 import { jwtVerify } from "jose/jwt/verify";
 import type { NextRequest } from "next/server";
 

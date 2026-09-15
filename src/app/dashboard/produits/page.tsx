@@ -4,6 +4,7 @@ import {useState, useEffect, useCallback, ChangeEvent, useRef} from "react";
 import Link from "next/link";
 import {Download, FileSpreadsheet, CheckCircle, AlertCircle} from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
+import Pagination from "@/components/Pagination";
 import {useAuth} from "@/context/AuthContext";
 
 interface Stock {
@@ -24,6 +25,15 @@ interface Produit {
     stock: Stock | null;
 }
 
+interface PaginationInfo {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+}
+
+const PAGE_LIMIT = 20;
+
 
 export default function ProduitsPage() {
     const {user} = useAuth();
@@ -33,6 +43,8 @@ export default function ProduitsPage() {
     const [recherche, setRecherche] = useState("");
     const [loading, setLoading] = useState(true);
     const [filtrParCtegories, setFiltrParCtegories] = useState("");
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState<PaginationInfo | null>(null);
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState<{ success: boolean; message: string; results?: { produits: number; errors: string[] } } | null>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
@@ -58,19 +70,25 @@ export default function ProduitsPage() {
                 console.error(err);
             }
 
+            console.log(produits)
 
             const params = new URLSearchParams();
             if (recherche) params.set("search", recherche);
             if (filtrParCtegories) params.set("categoier", filtrParCtegories);
+            params.set("page", String(page));
+            params.set("limit", String(PAGE_LIMIT));
             const res = await fetch(`/api/produits?${params}&categoier=${filtrParCtegories}`);
             const data = await res.json();
-            if (res.ok) setProduits(data.produits);
+            if (res.ok) {
+                setProduits(data.produits);
+                if (data.pagination) setPagination(data.pagination);
+            }
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [recherche, filtrParCtegories]);
+    }, [recherche, filtrParCtegories, page]);
 
     useEffect(() => {
         fetchProduits();
@@ -144,7 +162,7 @@ export default function ProduitsPage() {
                   <input
                       placeholder="Rechercher par code ou désignation..."
                       value={recherche}
-                      onChange={(e) => setRecherche(e.target.value)}
+                      onChange={(e) => { setRecherche(e.target.value); setPage(1); }}
                       className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 w-full sm:max-w-sm"
                   />
 
@@ -153,6 +171,7 @@ export default function ProduitsPage() {
                     <select name="dddd" id="ss"
                             onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                                 setFiltrParCtegories(e.target.value);
+                                setPage(1);
                             }
 
                             }
@@ -187,7 +206,8 @@ export default function ProduitsPage() {
                 </div>
             )}
 
-            <div className="relative w-full overflow-x-auto rounded-md border">
+            <div className="overflow-hidden rounded-md border">
+                <div className="relative w-full overflow-x-auto">
                 <table className="w-full caption-bottom text-base border-collapse">
                     <thead className="[&_tr]:border-b">
                     <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
@@ -247,6 +267,16 @@ export default function ProduitsPage() {
                     )}
                     </tbody>
                 </table>
+                </div>
+                {pagination && (
+                    <Pagination
+                        page={pagination.page}
+                        totalPages={pagination.pages}
+                        total={pagination.total}
+                        limit={pagination.limit}
+                        onPageChange={setPage}
+                    />
+                )}
             </div>
         </div>
     );

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 
 import { useAuth } from "@/context/AuthContext";
 import LoadingDots from "@/components/LoadingDots";
+import Pagination from "@/components/Pagination";
+import { normalizePhoneForWhatsApp } from "@/lib/whatsapp";
 
 interface Supplier {
   id: string;
@@ -20,11 +22,22 @@ interface FormState {
 
 const emptyForm: FormState = { code: "", nom: "", telephone: "", adresse: "", ice: "" };
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+const PAGE_LIMIT = 20;
+
 export default function SuppliersPage() {
   const { user } = useAuth();
   const isResponsable = user?.role === "RESPONSABLE";
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,15 +52,20 @@ export default function SuppliersPage() {
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_LIMIT));
       const res = await fetch(`/api/fournisseurs?${params}`);
       const data = await res.json();
-      if (res.ok) setSuppliers(data.fournisseurs);
+      if (res.ok) {
+        setSuppliers(data.fournisseurs);
+        setPagination(data.pagination);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, page]);
 
   useEffect(() => { fetchSuppliers(); }, [fetchSuppliers]);
 
@@ -70,7 +88,11 @@ export default function SuppliersPage() {
       const res = await fetch(`/api/fournisseurs/${deleteTarget.id}`, { method: "DELETE" });
       if (res.ok) {
         setDeleteTarget(null);
-        fetchSuppliers();
+        if (suppliers.length === 1 && page > 1) {
+          setPage((p) => p - 1);
+        } else {
+          fetchSuppliers();
+        }
       }
     } catch (err) {
       console.error(err);
@@ -126,12 +148,13 @@ export default function SuppliersPage() {
         <input
           placeholder="Rechercher..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-sm"
         />
       </div>
 
-      <div className="relative w-full overflow-x-auto rounded-md border">
+      <div className="overflow-hidden rounded-md border">
+        <div className="relative w-full overflow-x-auto">
         <table className="w-full caption-bottom text-base border-collapse">
           <thead className="[&_tr]:border-b">
             <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
@@ -158,10 +181,19 @@ export default function SuppliersPage() {
                   <td className="p-3 align-middle whitespace-nowrap font-medium">{s.code}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.nom}</td>
                   <td className="p-3 align-middle whitespace-nowrap">
-                    <a href={`https://wa.me/${s.telephone.replace(/^0/, "212")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-green-600 hover:underline">
-                      <img src="/whatsapp.svg" alt="WhatsApp" className="size-4" />
-                      {s.telephone}
-                    </a>
+                    {(() => {
+                      const waNumber = normalizePhoneForWhatsApp(s.telephone);
+                      return waNumber ? (
+                        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-green-600 hover:underline">
+                          <img src="/whatsapp.svg" alt="WhatsApp" className="size-4" />
+                          {s.telephone}
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-muted-foreground" title="Numéro invalide : indicatif pays manquant ou numéro erroné">
+                          {s.telephone || "-"}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.adresse || "-"}</td>
                   <td className="p-3 align-middle whitespace-nowrap">{s.ice || "-"}</td>
@@ -188,6 +220,16 @@ export default function SuppliersPage() {
             )}
           </tbody>
         </table>
+        </div>
+        {pagination && (
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.pages}
+            total={pagination.total}
+            limit={pagination.limit}
+            onPageChange={setPage}
+          />
+        )}
       </div>
 
       {open && (

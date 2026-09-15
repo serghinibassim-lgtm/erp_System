@@ -4,6 +4,9 @@ import prisma from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
+    const skip = (page - 1) * limit;
     const recherche = searchParams.get("search") || "";
 
     const where: Record<string, unknown> = {};
@@ -26,15 +29,23 @@ export async function GET(request: NextRequest) {
       where.stockActuel = quantityFilter;
     }
 
-    const stocks = await prisma.stock.findMany({
-      where,
-      orderBy: { produit: { code: "asc" } },
-      include: {
-        produit: { select: { code: true, designation: true, unite: true, stockMin: true, categorie: true } },
-      },
-    });
+    const [stocks, total] = await Promise.all([
+      prisma.stock.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { produit: { code: "asc" } },
+        include: {
+          produit: { select: { code: true, designation: true, unite: true, stockMin: true, categorie: true } },
+        },
+      }),
+      prisma.stock.count({ where }),
+    ]);
 
-    return NextResponse.json({ stocks });
+    return NextResponse.json({
+      stocks,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     console.error("Stock GET error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { AlertTriangle, X } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
+import Pagination from "@/components/Pagination";
 
 interface Achat {
   id: string;
@@ -28,8 +29,19 @@ interface AlertePrix {
   ecart: number;
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+const PAGE_LIMIT = 20;
+
 export default function AchatsPage() {
   const [achats, setAchats] = useState<Achat[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [recherche, setRecherche] = useState("");
   const [minQuantite, setMinQuantite] = useState("");
   const [maxQuantite, setMaxQuantite] = useState("");
@@ -50,16 +62,21 @@ export default function AchatsPage() {
       if (maxQuantite) params.set("maxQuantity", maxQuantite);
       if (dateFrom) params.set("dateFrom", dateFrom);
       if (dateTo) params.set("dateTo", dateTo);
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_LIMIT));
       
       const res = await fetch(`/api/achats?${params}`);
       const data = await res.json();
-      if (res.ok) setAchats(data.achats);
+      if (res.ok) {
+        setAchats(data.achats);
+        if (data.pagination) setPagination(data.pagination);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [recherche, minQuantite, maxQuantite, dateFrom, dateTo]);
+  }, [recherche, minQuantite, maxQuantite, dateFrom, dateTo, page]);
 
   useEffect(() => { fetchAchats(); }, [fetchAchats]);
 
@@ -111,7 +128,7 @@ export default function AchatsPage() {
         <input
           placeholder="Rechercher par produit..."
           value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
+          onChange={(e) => { setRecherche(e.target.value); setPage(1); }}
           className="h-9 w-full min-w-0 flex-1 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:max-w-xs"
         />
         <div className="flex items-center gap-2">
@@ -119,7 +136,7 @@ export default function AchatsPage() {
             type="number"
             placeholder="Qté min"
             value={minQuantite}
-            onChange={(e) => setMinQuantite(e.target.value)}
+            onChange={(e) => { setMinQuantite(e.target.value); setPage(1); }}
             className="h-9 w-24 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3"
           />
           <span className="text-muted-foreground">-</span>
@@ -127,7 +144,7 @@ export default function AchatsPage() {
             type="number"
             placeholder="Qté max"
             value={maxQuantite}
-            onChange={(e) => setMaxQuantite(e.target.value)}
+            onChange={(e) => { setMaxQuantite(e.target.value); setPage(1); }}
             className="h-9 w-24 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3"
           />
         </div>
@@ -135,14 +152,14 @@ export default function AchatsPage() {
           <input
             type="date"
             value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
+            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
             className="h-9 rounded-lg border border-input bg-transparent px-3 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 text-muted-foreground"
           />
           <span className="text-muted-foreground">à</span>
           <input
             type="date"
             value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
+            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
             className="h-9 rounded-lg border border-input bg-transparent px-3 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 text-muted-foreground"
           />
         </div>
@@ -161,7 +178,7 @@ export default function AchatsPage() {
             </span>
           </button>
         </div>
-        <div className="overflow-x-auto rounded-md border">
+        <div className="overflow-hidden rounded-md border">
         <div className="relative w-full overflow-x-auto">
           <table className="w-full caption-bottom text-base border-collapse">
             <thead className="[&_tr]:border-b">
@@ -219,6 +236,7 @@ export default function AchatsPage() {
             </tbody>
           </table>
         </div>
+        {pagination && <Pagination page={pagination.page} totalPages={pagination.pages} total={pagination.total} limit={pagination.limit} onPageChange={setPage} />}
         </div>
       </div>
 

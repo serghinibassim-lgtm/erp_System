@@ -5,8 +5,8 @@ import { requireRole } from "@/lib/auth";
 import * as XLSX from "xlsx";
 
 const HEADER_ALIASES: Record<string, string[]> = {
-  code: ["code produit", "code", "code_produit", "ref", "reference", "référence", "codage", "sku", "id"],
-  designation: ["désignation", "designation", "produit", "article", "libellé", "libelle", "nom", "description", "nom produit", "desc"],
+  code: ["code produit","Code produit", "code", "code_produit", "ref", "reference", "référence", "codage", "sku", "id"],
+  designation: ["désignation","Désignation", "designation", "produit", "article", "libellé", "libelle", "nom", "description", "nom produit", "desc"],
   categorie: ["catégorie", "categorie", "category", "famille", "cat", "type"],
   unite: ["unité de mesure", "unité", "unite", "unite de mesure", "u.m", "um", "unité mesure"],
   prixAchat: ["prix achat référence", "prix achat réf", "prix achat source", "prix achat ref", "prix achat", "pa", "prix d'achat", "prix_achat", "prix achat de revient", "pcrib"],

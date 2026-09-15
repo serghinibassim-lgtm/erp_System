@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Trash2, UserPlus } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
+import Pagination from "@/components/Pagination";
 import { useAuth } from "@/context/AuthContext";
 
 interface Utilisateur {
@@ -13,11 +14,22 @@ interface Utilisateur {
   creeLe: string;
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+const PAGE_LIMIT = 20;
+
 export default function UtilisateursPage() {
   const { user } = useAuth();
   const isResponsable = user?.role === "RESPONSABLE";
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
@@ -26,21 +38,26 @@ export default function UtilisateursPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/utilisateurs");
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_LIMIT));
+      const res = await fetch(`/api/utilisateurs?${params}`);
       if (res.ok) {
         const data = await res.json();
         setUtilisateurs(data.utilisateurs);
+        setPagination(data.pagination);
       }
     } catch {
       console.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +74,11 @@ export default function UtilisateursPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setUtilisateurs(prev => [...prev, data.utilisateur]);
         setNom("");
         setEmail("");
         setPassword("");
         setShowForm(false);
+        fetchUsers();
       } else {
         setError(data.error || "Erreur");
         if (data.errors) setFieldErrors(data.errors);
@@ -78,7 +95,11 @@ export default function UtilisateursPage() {
     try {
       const res = await fetch(`/api/utilisateurs/${id}`, { method: "DELETE" });
       if (res.ok) {
-        setUtilisateurs(prev => prev.filter(u => u.id !== id));
+        if (utilisateurs.length === 1 && page > 1) {
+          setPage((p) => p - 1);
+        } else {
+          fetchUsers();
+        }
       }
     } catch {
       console.error("Failed to delete user");
@@ -181,32 +202,29 @@ export default function UtilisateursPage() {
         </div>
       )}
 
-      {loading ? (
-        <p className="text-sm text-muted-foreground"><LoadingDots /></p>
-      ) : utilisateurs.length === 0 ? (
-        <div className="relative w-full overflow-x-auto rounded-md border">
+      <div className="overflow-hidden rounded-md border">
+        <div className="relative w-full overflow-x-auto">
           <table className="w-full caption-bottom text-base border-collapse">
-            <tbody>
+            <thead className="[&_tr]:border-b">
               <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                <td className="p-3 align-middle text-sm text-center py-8 text-muted-foreground">Aucun utilisateur pour le moment</td>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Nom</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Email</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Rôle</th>
+                <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Créé le</th>
+                <th className="h-11 px-3 text-right align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Actions</th>
               </tr>
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="relative w-full overflow-x-auto rounded-md border">
-            <table className="w-full caption-bottom text-base border-collapse">
-              <thead className="[&_tr]:border-b">
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {loading ? (
                 <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
-                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Nom</th>
-                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Email</th>
-                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Rôle</th>
-                  <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Créé le</th>
-                  <th className="h-11 px-3 text-right align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 text-xs uppercase">Actions</th>
+                  <td colSpan={5} className="p-3 text-center py-8 text-muted-foreground align-middle whitespace-nowrap"><LoadingDots /></td>
                 </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {utilisateurs.map((u) => (
+              ) : utilisateurs.length === 0 ? (
+                <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                  <td colSpan={5} className="p-3 align-middle text-sm text-center py-8 text-muted-foreground">Aucun utilisateur pour le moment</td>
+                </tr>
+              ) : (
+                utilisateurs.map((u) => (
                   <tr key={u.id} className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
                     <td className="p-3 align-middle whitespace-nowrap text-sm font-medium">{u.nom}</td>
                     <td className="p-3 align-middle whitespace-nowrap text-sm text-muted-foreground">{u.email}</td>
@@ -233,11 +251,21 @@ export default function UtilisateursPage() {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+        {pagination && (
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.pages}
+            total={pagination.total}
+            limit={pagination.limit}
+            onPageChange={setPage}
+          />
+        )}
+      </div>
     </div>
   );
 }

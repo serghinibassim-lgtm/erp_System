@@ -3,6 +3,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, CheckCircle, FileText, RotateCcw } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
+import Pagination from "@/components/Pagination";
+import { buildWhatsAppUrl, WHATSAPP_INVALID_MESSAGE } from "@/lib/whatsapp";
+
+interface VenteDetail {
+  numeroVente: string | null;
+  dateVente: string;
+  produitCode: string | null;
+  produitDesignation: string;
+  quantite: number;
+  montantTotal: number;
+  dateLimitePaiement: string | null;
+}
 
 interface CreditClient {
   id: string;
@@ -17,7 +29,17 @@ interface CreditClient {
   statut: string;
   numeroVente: string | null;
   datePaiement: string | null;
+  details?: VenteDetail[];
 }
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+const PAGE_LIMIT = 20;
 
 export default function RecouvrementPage() {
   const [clients, setClients] = useState<CreditClient[]>([]);
@@ -25,23 +47,31 @@ export default function RecouvrementPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
+  const [whatsappError, setWhatsappError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const savedUnpaid = useRef<Record<string, { montant: number; nombre: number }>>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/recouvrement");
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_LIMIT));
+      const res = await fetch("/api/recouvrement?" + params);
       const data = await res.json();
       if (res.ok) {
         setClients(data.clients || []);
         setStats(data.stats || { unpaidClients: 0, unpaidInvoices: 0, totalUnpaid: 0, totalOverdue: 0 });
+        if (data.pagination) setPagination(data.pagination);
       }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search, page]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -120,20 +150,36 @@ export default function RecouvrementPage() {
     }
   };
 
-  const openWhatsApp = (phone: string, nom: string, montant: number) => {
-    const cleaned = phone.replace(/[^0-9]/g, "");
-    const message = encodeURIComponent(
-      `Bonjour ${nom},\n\nNous vous contactons concernant votre crédit d'un montant de ${montant.toFixed(2)} DH qui est actuellement impayé.\n\nMerci de bien vouloir régulariser votre situation dans les plus brefs délais.\n\nCordialement, MagasinPilot`
-    );
-    window.open(`https://wa.me/${cleaned}?text=${message}`, "_blank");
+  const formatDateFR = (iso: string | null) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("fr-FR");
   };
 
-  const filteredClients = clients.filter(
-    (c) =>
-      c.nom.toLowerCase().includes(search.toLowerCase()) ||
-      c.code.toLowerCase().includes(search.toLowerCase()) ||
-      (c.telephone && c.telephone.includes(search))
-  );
+  const openWhatsApp = (client: CreditClient) => {
+    setWhatsappError(null);
+    const { telephone: phone, nom, unpaidTotal: montant, details = [] } = client;
+
+    const lignes = details.map((v) => {
+      const dateVente = formatDateFR(v.dateVente);
+      const echeance = formatDateFR(v.dateLimitePaiement);
+      const facture = v.numeroVente || "sans N°";
+      return `• Facture ${facture} du ${dateVente} : ${v.produitDesignation} x${v.quantite} (${v.montantTotal.toFixed(2)} DH) — échéance : ${echeance}`;
+    });
+
+    const detailBloc = lignes.length > 0
+      ? `\n\nDétail des impayés :\n${lignes.join("\n")}`
+      : "";
+
+    const message =
+      `Bonjour ${nom},\n\nNous vous contactons concernant votre crédit d'un montant de ${montant.toFixed(2)} DH qui est actuellement impayé.${detailBloc}\n\nMerci de bien vouloir régulariser votre situation dans les plus brefs délais.\n\nCordialement, MagasinPilot`;
+    const url = buildWhatsAppUrl(phone, message);
+    if (!url) {
+      setWhatsappError(`${WHATSAPP_INVALID_MESSAGE} (reçu : "${phone}")`);
+      return;
+    }
+    window.open(url, "_blank");
+  };
 
   return (
     <div className="space-y-6">
@@ -170,11 +216,24 @@ export default function RecouvrementPage() {
           <input
             placeholder="Rechercher par nom, code ou téléphone..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent pl-9 pr-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>
+
+      {whatsappError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start justify-between gap-3">
+          <span>{whatsappError}</span>
+          <button
+            onClick={() => setWhatsappError(null)}
+            className="font-bold hover:text-red-900"
+            aria-label="Fermer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-8 text-muted-foreground"><LoadingDots /></div>
@@ -183,16 +242,16 @@ export default function RecouvrementPage() {
           <div className="flex flex-col gap-1 px-4 pt-4">
             <h2 className="text-lg font-semibold leading-snug">Clients créditeurs</h2>
             <p className="text-sm text-muted-foreground">
-              {filteredClients.length} client(s)
+              {pagination ? pagination.total : clients.length} client(s)
             </p>
           </div>
           <div className="p-4">
-            {filteredClients.length === 0 ? (
+            {clients.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Aucun client trouvé
               </p>
             ) : (
-              <div className="relative w-full overflow-x-auto rounded-md border">
+              <div className="overflow-hidden rounded-md border"><div className="relative w-full overflow-x-auto">
                 <table className="w-full caption-bottom text-base border-collapse">
                   <thead className="[&_tr]:border-b">
                     <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
@@ -204,7 +263,7 @@ export default function RecouvrementPage() {
                     </tr>
                   </thead>
                   <tbody className="[&_tr:last-child]:border-0">
-                    {filteredClients.map((c) => {
+                    {clients.map((c) => {
                       const isPaye = c.statut === "Payé";
                       const dateLimite = c.dateLimitePaiement
                         ? new Date(c.dateLimitePaiement).toLocaleDateString("fr-FR")
@@ -256,7 +315,7 @@ export default function RecouvrementPage() {
                               )}
                               {c.telephone && (
                                 <button
-                                  onClick={() => openWhatsApp(c.telephone!, c.nom, c.unpaidTotal)}
+                                  onClick={() => openWhatsApp(c)}
                                   className="inline-flex items-center justify-center gap-1 rounded-lg border border-transparent bg-green-600 text-white hover:bg-green-700 px-2 h-7 text-xs font-medium whitespace-nowrap transition-all"
                                 >
                                   <img src="/whatsapp.svg" alt="WhatsApp" className="size-3.5" />
@@ -279,7 +338,7 @@ export default function RecouvrementPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </div>{pagination && <Pagination page={pagination.page} totalPages={pagination.pages} total={pagination.total} limit={pagination.limit} onPageChange={setPage} />}</div>
             )}
           </div>
         </div>

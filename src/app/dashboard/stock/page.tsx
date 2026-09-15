@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Download, AlertTriangle, X } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
+import Pagination from "@/components/Pagination";
 
 interface StockItem {
   id: string;
@@ -23,6 +24,15 @@ interface StockItem {
   };
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+const PAGE_LIMIT = 20;
+
 export default function StockPage() {
   const [stocks, setStocks] = useState<StockItem[]>([]);
   const [recherche, setRecherche] = useState("");
@@ -31,6 +41,8 @@ export default function StockPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
   const fetchStocks = useCallback(async () => {
     setLoading(true);
@@ -39,16 +51,21 @@ export default function StockPage() {
       if (recherche) params.set("search", recherche);
       if (minQuantite) params.set("minQuantity", minQuantite);
       if (maxQuantite) params.set("maxQuantity", maxQuantite);
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_LIMIT));
       
       const res = await fetch(`/api/stock?${params}`);
       const data = await res.json();
-      if (res.ok) setStocks(data.stocks);
+      if (res.ok) {
+        setStocks(data.stocks);
+        if (data.pagination) setPagination(data.pagination);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [recherche, minQuantite, maxQuantite]);
+  }, [recherche, minQuantite, maxQuantite, page]);
 
   useEffect(() => { fetchStocks(); }, [fetchStocks]);
 
@@ -112,7 +129,7 @@ export default function StockPage() {
         <input
           placeholder="Rechercher par produit..."
           value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
+          onChange={(e) => { setRecherche(e.target.value); setPage(1); }}
           className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:max-w-xs"
         />
         <div className="flex items-center gap-2">
@@ -120,7 +137,7 @@ export default function StockPage() {
             type="number"
             placeholder="Qté min"
             value={minQuantite}
-            onChange={(e) => setMinQuantite(e.target.value)}
+            onChange={(e) => { setMinQuantite(e.target.value); setPage(1); }}
             className="h-9 w-24 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3"
           />
           <span className="text-muted-foreground">-</span>
@@ -128,7 +145,7 @@ export default function StockPage() {
             type="number"
             placeholder="Qté max"
             value={maxQuantite}
-            onChange={(e) => setMaxQuantite(e.target.value)}
+            onChange={(e) => { setMaxQuantite(e.target.value); setPage(1); }}
             className="h-9 w-24 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3"
           />
         </div>
@@ -147,7 +164,7 @@ export default function StockPage() {
             </span>
           </button>
         </div>
-      <div className="relative w-full overflow-x-auto rounded-md border">
+      <div className="overflow-hidden rounded-md border"><div className="relative w-full overflow-x-auto">
         <table className="w-full caption-bottom text-base border-collapse">
           <thead className="[&_tr]:border-b">
             <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
@@ -196,7 +213,7 @@ export default function StockPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </div>{pagination && <Pagination page={pagination.page} totalPages={pagination.pages} total={pagination.total} limit={pagination.limit} onPageChange={setPage} />}</div>
       </div>
 
       {notification && (
