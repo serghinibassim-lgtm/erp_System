@@ -74,7 +74,7 @@ export default function VitrinePage() {
       <section className="w-full px-4 py-24 sm:py-32 flex flex-col items-center text-center space-y-8 bg-gradient-to-b from-primary/10 via-background to-background">
         <div className="mx-auto w-full max-w-4xl flex flex-col items-center space-y-8">
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground w-full leading-tight">
-            Gérez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">stock</span> sans stress, sans erreur, sans Excel
+            Gérez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">stock</span> sans stress, sans erreur avec  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">MagasinPilot</span>
           </h1>
 
           <p className="text-xl text-muted-foreground w-full max-w-2xl">
@@ -187,7 +187,7 @@ export default function VitrinePage() {
 
       {/* CTA final */}
       <Reveal className="w-full">
-        <section className="w-full py-24 bg-primary text-primary-foreground">
+        <section className="w-full py-24  ">
           <div className="mx-auto w-full max-w-4xl px-4 text-center space-y-8">
             <h2 className="text-3xl sm:text-5xl font-bold tracking-tight">Prêt à transformer votre magasin ?</h2>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
