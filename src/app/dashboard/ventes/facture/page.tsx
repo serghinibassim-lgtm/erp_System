@@ -19,8 +19,8 @@ interface FactureItem {
 interface DocumentInfo {
   numeroVente: string;
   date: string;
-  client: { nom: string; telephone: string | null; adresse: string | null } | null;
-  modePaiement: string | null;
+  client: { nom: string; telephone: string | null; adresse: string | null };
+  modePaiement: string;
   observation: string | null;
   paye: boolean;
   dateLimitePaiement: string | null;

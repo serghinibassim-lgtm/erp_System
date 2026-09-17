@@ -11,17 +11,13 @@ export interface JwtPayload {
     role: string;
 }
 
-export async function hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 12);
-}
 
-export async function comparePassword(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash);
-}
 
-export function signToken(payload: JwtPayload): string {
-    return jwt.sign(payload, JWT_SECRET, {expiresIn: "8h"});
-}
+export async function hashPassword(password: string): Promise<string> {return bcrypt.hash(password, 12);}
+
+export async function comparePassword(password: string, hash: string): Promise<boolean> {return bcrypt.compare(password, hash);}
+
+export function signToken(payload: JwtPayload): string {return jwt.sign(payload, JWT_SECRET, {expiresIn: "8h"});}
 
 export function verifyToken(token: string): JwtPayload {
     return jwt.verify(token, JWT_SECRET) as JwtPayload;
@@ -35,7 +31,6 @@ export function getTokenFromRequest(request: NextRequest): string | null {
     const cookie = request.cookies.get("token");
     return cookie?.value || null;
 }
-
 export function getAuthUser(request: NextRequest): JwtPayload | null {
     const token = getTokenFromRequest(request);
     if (!token) return null;
@@ -45,7 +40,6 @@ export function getAuthUser(request: NextRequest): JwtPayload | null {
         return null;
     }
 }
-
 export function requireRole(request: NextRequest, roles: string[]): { user: JwtPayload } | { error: NextResponse } {
     const user = getAuthUser(request);
     if (!user) {

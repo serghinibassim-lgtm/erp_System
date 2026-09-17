@@ -18,8 +18,8 @@ interface FactureItem {
 interface DocumentInfo {
   numeroDocument: string;
   date: string;
-  fournisseur: { nom: string; telephone: string | null; adresse: string | null; ice: string | null } | null;
-  modePaiement: string | null;
+  fournisseur: { nom: string; telephone: string | null; adresse: string | null; ice: string | null };
+  modePaiement: string;
   observation: string | null;
 }
 

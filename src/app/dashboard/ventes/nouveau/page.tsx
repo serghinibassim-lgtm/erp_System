@@ -91,12 +91,33 @@ export default function NouvelleVentePage() {
     return p?.stock?.stockActuel ?? 0;
   };
 
+  // Date du jour au format YYYY-MM-DD en heure locale (toISOString est en UTC et peut décaler d'un jour)
+  const dateJour = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
   const totalAmount = lineItems.reduce((sum, li) => sum + ((parseInt(li.quantite) || 0) * (parseFloat(li.prixUnitaire) || 0)), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setFieldErrors({});
+    const frontErrors: Record<string, string> = {};
+    if (!clientId) frontErrors.clientId = "Le client est obligatoire";
+    if (!modePaiement) frontErrors.modePaiement = "Le mode de paiement est obligatoire";
+    if (modePaiement === "Crédit") {
+      if (!dateLimitePaiement) {
+        frontErrors.dateLimitePaiement = "La date limite est obligatoire pour un paiement à crédit";
+      } else if (dateLimitePaiement < dateJour()) {
+        frontErrors.dateLimitePaiement = "Interdit : la date limite de paiement est déjà dépassée";
+      }
+    }
+    if (Object.keys(frontErrors).length > 0) {
+      setFieldErrors(frontErrors);
+      setError("Veuillez sélectionner un client et un mode de paiement.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -105,8 +126,8 @@ export default function NouvelleVentePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: new Date(date).toISOString(),
-          clientId: clientId || undefined,
-          modePaiement: modePaiement || undefined,
+          clientId,
+          modePaiement,
           dateLimitePaiement: modePaiement === "Crédit" && dateLimitePaiement ? new Date(dateLimitePaiement).toISOString() : undefined,
           observation: observation || undefined,
           lineItems: lineItems.map(li => ({
@@ -120,11 +141,11 @@ export default function NouvelleVentePage() {
       if (res.ok) {
         setCreatedDocNum(data.numeroVente || `VENTE-${Date.now()}`);
       } else {
-        setError(data.error || "Erreur");
+        setError(data.error || "Une erreur est survenue");
         if (data.errors) setFieldErrors(data.errors);
       }
     } catch {
-      setError("Erreur de connexion");
+      setError("Erreur de connexion. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -137,8 +158,8 @@ export default function NouvelleVentePage() {
           <div className="text-4xl mb-4">✅</div>
           <h2 className="text-xl font-bold mb-2">Vente enregistrée !</h2>
           <p className="text-muted-foreground mb-6">
-            Document: <strong>{createdDocNum}</strong><br />
-            Montant total: <strong>{totalAmount.toFixed(2)} DH</strong>
+            Document : <strong>{createdDocNum}</strong><br />
+            Montant total : <strong>{totalAmount.toFixed(2)} DH</strong>
           </p>
           <div className="flex flex-col gap-3">
             <button
@@ -146,13 +167,13 @@ export default function NouvelleVentePage() {
               onClick={() => window.open(`/dashboard/ventes/facture?doc=${createdDocNum}&download=true`, "_blank")}
             >
               <Printer className="h-4 w-4" />
-              Télécharger la facture PDF
+              Télécharger la facture en PDF
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background hover:bg-muted px-3 h-9 text-sm font-medium"
               onClick={() => router.push("/dashboard/ventes")}
             >
-              Retour aux ventes
+              Retour à la liste des ventes
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background hover:bg-muted px-3 h-9 text-sm font-medium"
@@ -195,30 +216,33 @@ export default function NouvelleVentePage() {
                 <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
               </div>
               <div className="space-y-2">
-                <label htmlFor="clientId" className="flex items-center gap-2 text-base leading-none font-medium select-none">Client</label>
-                <select id="clientId" value={clientId} onChange={(e) => setClientId(e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
+                <label htmlFor="clientId" className="flex items-center gap-2 text-base leading-none font-medium select-none">Client <span className="text-destructive">*</span></label>
+                <select id="clientId" value={clientId} onChange={(e) => { setClientId(e.target.value); setFieldErrors(prev => { const n = { ...prev }; delete n.clientId; return n; }); }} required className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.clientId ? "border-red-500" : "border-input"}`}>
                   <option value="">Sélectionner un client</option>
                   {clients.map(c => (
                     <option key={c.id} value={c.id}>{c.nom}</option>
                   ))}
                 </select>
+                {fieldErrors.clientId && <p className="text-sm text-red-600">{fieldErrors.clientId}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-                <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement</label>
-                <select id="modePaiement" value={modePaiement} onChange={(e) => { setModePaiement(e.target.value); if (e.target.value !== "Crédit") setDateLimitePaiement(""); }} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
-                  <option value="">Sélectionner</option>
+                <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement <span className="text-destructive">*</span></label>
+                <select id="modePaiement" value={modePaiement} onChange={(e) => { setModePaiement(e.target.value); if (e.target.value !== "Crédit") setDateLimitePaiement(""); setFieldErrors(prev => { const n = { ...prev }; delete n.modePaiement; return n; }); }} required className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.modePaiement ? "border-red-500" : "border-input"}`}>
+                  <option value="">Sélectionner un mode de paiement</option>
                   <option value="Espèces">Espèces</option>
                   <option value="Chèque">Chèque</option>
                   <option value="Virement">Virement</option>
                   <option value="Carte">Carte</option>
                   <option value="Crédit">Crédit</option>
                 </select>
+                {fieldErrors.modePaiement && <p className="text-sm text-red-600">{fieldErrors.modePaiement}</p>}
               {modePaiement === "Crédit" && (
                 <div className="mt-2 space-y-2">
                   <label htmlFor="dateLimitePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Date limite de paiement <span className="text-destructive">*</span></label>
-                  <input id="dateLimitePaiement" type="date" value={dateLimitePaiement} onChange={(e) => setDateLimitePaiement(e.target.value)} required className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
+                  <input id="dateLimitePaiement" type="date" value={dateLimitePaiement} min={dateJour()} onChange={(e) => { setDateLimitePaiement(e.target.value); setFieldErrors(prev => { const n = { ...prev }; delete n.dateLimitePaiement; return n; }); }} required className={`h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 ${fieldErrors.dateLimitePaiement ? "border-red-500" : "border-input"}`} />
+                  {fieldErrors.dateLimitePaiement && <p className="text-sm text-red-600">{fieldErrors.dateLimitePaiement}</p>}
                 </div>
               )}
             </div>
@@ -230,8 +254,8 @@ export default function NouvelleVentePage() {
                   <thead className="[&_tr]:border-b">
                     <tr className="border-b border-border/60 bg-muted/30">
                       <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-2/5">Produit</th>
-                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-16">Qté</th>
-                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-24">Prix unit.</th>
+                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-16">Quantité</th>
+                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-24">Prix unitaire</th>
                       <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-24">Total</th>
                       <th className="h-10 px-2 w-10"></th>
                     </tr>
@@ -245,17 +269,17 @@ export default function NouvelleVentePage() {
                               onChange={(e) => updateLine(li.key, "produitId", e.target.value)}
                               className={`flex h-8 w-full rounded border bg-transparent px-2 text-sm ${fieldErrors[`lineItems.${idx}.produitId`] ? "border-red-500" : "border-input"}`}
                             >
-                              <option value="">Choisir...</option>
+                              <option value="">Choisir un produit…</option>
                               {produits.filter(p =>
                                 p.id === li.produitId || !lineItems.some(other => other.key !== li.key && other.produitId === p.id)
                               ).map(p => (
                                 <option key={p.id} value={p.id}>
-                                  {p.code} - {p.designation} (stock: {p.stock?.stockActuel ?? 0})
+                                  {p.code} - {p.designation} (Stock : {p.stock?.stockActuel ?? 0})
                                 </option>
                               ))}
                             </select>
                           {li.produitId && (
-                            <p className="text-xs text-muted-foreground mt-0.5">Dispo: {getStock(li.produitId)}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Disponible : {getStock(li.produitId)}</p>
                           )}
                         </td>
                         <td className="p-1">
@@ -285,12 +309,12 @@ export default function NouvelleVentePage() {
             </div>
 
             <div className="flex justify-end">
-              <div className="text-base font-bold">Total: {totalAmount.toFixed(2)} DH</div>
+              <div className="text-base font-bold">Total : {totalAmount.toFixed(2)} DH</div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="observation" className="flex items-center gap-2 text-base leading-none font-medium select-none">Observation</label>
-              <input id="observation" placeholder="Optionnel" value={observation} onChange={(e) => setObservation(e.target.value)} className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
+              <input id="observation" placeholder="Optionnelle" value={observation} onChange={(e) => setObservation(e.target.value)} className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
             </div>
 
             <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
@@ -298,7 +322,7 @@ export default function NouvelleVentePage() {
                 Annuler
               </button>
               <button type="submit" disabled={loading} className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium w-full sm:w-auto">
-                {loading ? "Enregistrement..." : "Enregistrer la vente"}
+                {loading ? "Enregistrement en cours…" : "Enregistrer la vente"}
               </button>
             </div>
           </form>

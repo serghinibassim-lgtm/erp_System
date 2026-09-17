@@ -76,6 +76,13 @@ export async function POST(request: Request) {
     }
 
     const errors: Record<string, string> = {};
+
+    if (!fournisseurId || String(fournisseurId).trim() === "") {
+      errors.fournisseurId = "Le fournisseur est obligatoire";
+    }
+    if (!modePaiement || String(modePaiement).trim() === "") {
+      errors.modePaiement = "Le mode de paiement est obligatoire";
+    }
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (!item.produitId) errors[`lineItems.${i}.produitId`] = "Le produit est requis";
@@ -85,6 +92,12 @@ export async function POST(request: Request) {
 
     if (Object.keys(errors).length > 0) {
       return NextResponse.json({ error: "Validation échouée", errors }, { status: 400 });
+    }
+
+    // Vérifier que le fournisseur existe
+    const fournisseur = await prisma.fournisseur.findUnique({ where: { id: String(fournisseurId) } });
+    if (!fournisseur) {
+      return NextResponse.json({ error: "Fournisseur introuvable", errors: { fournisseurId: "Le fournisseur sélectionné est introuvable" } }, { status: 400 });
     }
 
     const dateDoc = date ? new Date(date) : new Date();
@@ -104,31 +117,40 @@ export async function POST(request: Request) {
       const price = parseFloat(item.prixUnitaire);
       const total = item.montantTotal != null ? parseFloat(item.montantTotal) : qty * price;
 
-      const ecart = price > Number(produit.prixAchatRef)
-        ? price - Number(produit.prixAchatRef)
+      const prixRef = Number(produit.prixAchatRef);
+      const ecart = price > prixRef
+        ? price - prixRef
         : null;
 
-      const thresholdParam = await prisma.parametre.findUnique({ where: { cle: "purchase_alert_threshold" } });
-      const threshold = thresholdParam ? parseFloat(thresholdParam.valeur) : 0;
-      const alerte = ecart != null && ecart > threshold;
+      const seuilParam = await prisma.parametre.findUnique({ where: { cle: "seuil_alerte_achat" } })
+        ?? await prisma.parametre.findUnique({ where: { cle: "purchase_alert_threshold" } });
+      const seuilPourcent = seuilParam ? parseFloat(seuilParam.valeur) : 0;
+      let alerte = false;
+      if (ecart != null) {
+        if (prixRef > 0) {
+          const pourcentageEcart = (ecart / prixRef) * 100;
+          alerte = pourcentageEcart > seuilPourcent;
+        } else {
+          alerte = ecart > seuilPourcent;
+        }
+      }
 
       const achat = await prisma.$transaction(async (tx) => {
         const newAchat = await tx.achat.create({
           data: {
             date: dateDoc,
             numeroDocument: numeroDocument || null,
-            fournisseurId: fournisseurId || null,
+            fournisseurId: String(fournisseurId),
             produitId: item.produitId,
             quantite: qty,
             prixUnitaire: price,
             montantTotal: total,
-            modePaiement: modePaiement || null,
+            modePaiement: String(modePaiement),
             observation: observation || null,
             ecart: ecart || null,
             alerte,
           },
         });
-
         const stock = await tx.stock.findUnique({ where: { produitId: item.produitId } });
         if (stock) {
           const newTotalAchats = stock.totalAchats + qty;
@@ -136,7 +158,6 @@ export async function POST(request: Request) {
           const newValeurAchat = Number(produit.prixAchatRef) * newStockActuel;
           const newValeurVente = Number(produit.prixVenteRef) * newStockActuel;
           const newMargePotentielle = newValeurVente - newValeurAchat;
-
           await tx.stock.update({
             where: { produitId: item.produitId },
             data: {
@@ -149,9 +170,9 @@ export async function POST(request: Request) {
             },
           });
         }
-
         return newAchat;
       });
+
 
       achats.push(achat);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { Search, CheckCircle, FileText, RotateCcw } from "lucide-react";
 import LoadingDots from "@/components/LoadingDots";
 import Pagination from "@/components/Pagination";
@@ -318,7 +319,7 @@ export default function RecouvrementPage() {
                                   onClick={() => openWhatsApp(c)}
                                   className="inline-flex items-center justify-center gap-1 rounded-lg border border-transparent bg-green-600 text-white hover:bg-green-700 px-2 h-7 text-xs font-medium whitespace-nowrap transition-all"
                                 >
-                                  <img src="/whatsapp.svg" alt="WhatsApp" className="size-3.5" />
+                                  <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} className="size-3.5" />
                                   WhatsApp
                                 </button>
                               )}

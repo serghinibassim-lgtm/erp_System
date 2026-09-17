@@ -66,7 +66,7 @@ export default function GuidePage() {
         <ul>
           <li><strong>Nouvel achat :</strong> sélectionnez un produit, fournisseur, quantité, prix unitaire</li>
           <li>Le montant total est calculé automatiquement</li>
-          <li>Une <strong>alerte</strong> est déclenchée si le prix saisi dépasse le prix de référence achat + seuil paramétré</li>
+          <li>Une <strong>alerte</strong> est déclenchée si le pourcentage d&apos;écart dépasse le seuil paramétré : (prix saisi - prix réf. achat) / prix réf. × 100 &gt; seuil (%)</li>
           <li>Le stock est mis à jour automatiquement</li>
         </ul>
       </Section>
@@ -76,7 +76,7 @@ export default function GuidePage() {
         <ul>
           <li><strong>Nouvelle vente :</strong> sélectionnez un produit, client, quantité, prix unitaire</li>
           <li>Le montant total est calculé automatiquement</li>
-          <li>Une <strong>alerte</strong> est déclenchée si le prix de vente est inférieur au prix de référence vente - seuil</li>
+          <li>Une <strong>alerte</strong> est déclenchée si le pourcentage d&apos;écart dépasse le seuil paramétré : (prix réf. vente - prix saisi) / prix réf. × 100 &gt; seuil (%)</li>
           <li>Le stock est mis à jour automatiquement</li>
         </ul>
       </Section>
@@ -110,8 +110,8 @@ export default function GuidePage() {
       <Section title="9. Paramètres (Responsable uniquement)">
         <p>Configuration de l&apos;application.</p>
         <ul>
-          <li><strong>Seuil d&apos;alerte achat :</strong> écart maximum autorisé avant déclenchement d&apos;une alerte</li>
-          <li><strong>Seuil d&apos;alerte vente :</strong> écart minimum autorisé avant déclenchement d&apos;une alerte</li>
+          <li><strong>Seuil d&apos;alerte achat (%) :</strong> pourcentage d&apos;écart maximum autorisé avant déclenchement d&apos;une alerte</li>
+          <li><strong>Seuil d&apos;alerte vente (%) :</strong> pourcentage d&apos;écart maximum autorisé avant déclenchement d&apos;une alerte</li>
           <li><strong>Catégories :</strong> liste des catégories de produits (utilisées dans les formulaires)</li>
           <li><strong>Unités :</strong> liste des unités de mesure (pièce, kg, litre...)</li>
         </ul>
@@ -129,8 +129,8 @@ export default function GuidePage() {
       <Section title="Règles de gestion">
         <ul>
           <li><strong>Stock</strong> = Stock initial + Total achats − Total ventes</li>
-          <li><strong>Alerte achat</strong> : déclenchée si prix saisi &gt; prix référence achat + seuil</li>
-          <li><strong>Alerte vente</strong> : déclenchée si prix saisi &lt; prix référence vente − seuil</li>
+          <li><strong>Alerte achat</strong> : déclenchée si (prix saisi - prix réf. achat) / prix réf. × 100 &gt; seuil (%)</li>
+          <li><strong>Alerte vente</strong> : déclenchée si (prix réf. vente - prix saisi) / prix réf. × 100 &gt; seuil (%)</li>
           <li><strong>Marge</strong> = prix vente − prix achat</li>
           <li><strong>Taux de marge</strong> = marge / prix achat</li>
           <li>L&apos;historique des prix est conservé à chaque modification</li>

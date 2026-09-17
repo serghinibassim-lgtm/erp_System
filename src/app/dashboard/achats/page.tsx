@@ -13,10 +13,10 @@ interface Achat {
   quantite: number;
   prixUnitaire: number;
   montantTotal: number;
-  modePaiement: string | null;
+  modePaiement: string;
   alerte: boolean | null;
   produit: { code: string; designation: string };
-  fournisseur: { nom: string } | null;
+  fournisseur: { nom: string };
 }
 
 interface AlertePrix {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 
 import { useAuth } from "@/context/AuthContext";
 import LoadingDots from "@/components/LoadingDots";
@@ -159,7 +160,7 @@ export default function ClientsPage() {
             <tr className="border-b border-border/60 transition-colors even:bg-muted/20 hover:bg-muted/40">
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Code</th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Nom</th>
-              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Téléphone <img src="/whatsapp.svg" alt="WhatsApp" className="size-3.5 inline ml-1" /></th>
+              <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Téléphone <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} className="size-3.5 inline ml-1" /></th>
               <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30">Adresse</th>
               {isResponsable && <th className="h-11 px-3 text-left align-middle font-semibold whitespace-nowrap text-foreground bg-muted/30 w-24">Actions</th>}
             </tr>
@@ -183,7 +184,7 @@ export default function ClientsPage() {
                       const waNumber = normalizePhoneForWhatsApp(c.telephone);
                       return waNumber ? (
                         <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-green-600 hover:underline">
-                          <img src="/whatsapp.svg" alt="WhatsApp" className="size-4" />
+                          <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} className="size-4" />
                           {c.telephone}
                         </a>
                       ) : (

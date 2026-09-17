@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
           const total = qty * price;
           const documentNumber = colDoc !== -1 ? String(row[colDoc] || "").trim() : null;
           const date = colDate !== -1 ? parseDate(row[colDate]) : new Date();
-          const modePaiement = colPaiement !== -1 ? String(row[colPaiement] || "").trim() : null;
+          const modePaiement = colPaiement !== -1 ? String(row[colPaiement] || "").trim() : "";
           let fournisseurId: string | null = null;
 
           if (colFournisseur !== -1) {
@@ -236,6 +236,15 @@ export async function POST(request: NextRequest) {
               });
               if (fournisseur) fournisseurId = fournisseur.id;
             }
+          }
+
+          if (!fournisseurId) {
+            results.errors.push(`Achat ${code} (ligne ${i + 1}): fournisseur obligatoire introuvable`);
+            continue;
+          }
+          if (!modePaiement) {
+            results.errors.push(`Achat ${code} (ligne ${i + 1}): mode de paiement obligatoire manquant`);
+            continue;
           }
 
           const ecart = price > Number(produit.prixAchatRef)
@@ -313,7 +322,7 @@ export async function POST(request: NextRequest) {
           const total = qty * price;
           const numeroVente = colNumero !== -1 ? String(row[colNumero] || "").trim() : `HIST-${code}-${i}`;
           const date = colDate !== -1 ? parseDate(row[colDate]) : new Date();
-          const modePaiement = colPaiement !== -1 ? String(row[colPaiement] || "").trim() : null;
+          const modePaiement = colPaiement !== -1 ? String(row[colPaiement] || "").trim() : "";
           let clientId: string | null = null;
 
           if (colClient !== -1) {
@@ -324,6 +333,15 @@ export async function POST(request: NextRequest) {
               });
               if (client) clientId = client.id;
             }
+          }
+
+          if (!clientId) {
+            results.errors.push(`Vente ${code} (ligne ${i + 1}): client obligatoire introuvable`);
+            continue;
+          }
+          if (!modePaiement) {
+            results.errors.push(`Vente ${code} (ligne ${i + 1}): mode de paiement obligatoire manquant`);
+            continue;
           }
 
           const ecart = price < Number(produit.prixVenteRef)

@@ -139,54 +139,56 @@ export default function ParametersPage() {
             </div>
             <div className="space-y-6 px-4 pb-4">
               <div className="space-y-2">
-                <label htmlFor="purchase_alert_threshold" className="flex items-center gap-2 text-base leading-none font-medium select-none">Seuil d&apos;alerte achat</label>
+                <label htmlFor="seuil_alerte_achat" className="flex items-center gap-2 text-base leading-none font-medium select-none">Seuil d&apos;alerte achat (%)</label>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
                   <input
-                    id="purchase_alert_threshold"
+                    id="seuil_alerte_achat"
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="0.00"
-                    value={getValue("purchase_alert_threshold")}
-                    onChange={(e) => handleChange("purchase_alert_threshold", e.target.value)}
+                    max="100"
+                    placeholder="Ex : 5 pour 5 %"
+                    value={getValue("seuil_alerte_achat")}
+                    onChange={(e) => handleChange("seuil_alerte_achat", e.target.value)}
                     className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-xs"
                   />
                   <button
-                    onClick={() => handleSave("purchase_alert_threshold")}
-                    disabled={saving["purchase_alert_threshold"]}
+                    onClick={() => handleSave("seuil_alerte_achat")}
+                    disabled={saving["seuil_alerte_achat"]}
                     className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:self-start [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
                   >
                     Enregistrer
                   </button>
                 </div>
                 <p className="text-lg text-muted-foreground">
-                  Alerte si prix d&apos;achat &gt; prix de réf. + seuil (&gt; prix réf.)
+                  Alerte si (prix d&apos;achat - prix de réf.) / prix de réf. × 100 &gt; seuil (%)
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="sale_alert_threshold" className="flex items-center gap-2 text-base leading-none font-medium select-none">Seuil d&apos;alerte vente</label>
+                <label htmlFor="seuil_alerte_vente" className="flex items-center gap-2 text-base leading-none font-medium select-none">Seuil d&apos;alerte vente (%)</label>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
                   <input
-                    id="sale_alert_threshold"
+                    id="seuil_alerte_vente"
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="0.00"
-                    value={getValue("sale_alert_threshold")}
-                    onChange={(e) => handleChange("sale_alert_threshold", e.target.value)}
+                    max="100"
+                    placeholder="Ex : 5 pour 5 %"
+                    value={getValue("seuil_alerte_vente")}
+                    onChange={(e) => handleChange("seuil_alerte_vente", e.target.value)}
                     className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-xs"
                   />
                   <button
-                    onClick={() => handleSave("sale_alert_threshold")}
-                    disabled={saving["sale_alert_threshold"]}
+                    onClick={() => handleSave("seuil_alerte_vente")}
+                    disabled={saving["seuil_alerte_vente"]}
                     className="inline-flex w-full items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:self-start [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
                   >
                     Enregistrer
                   </button>
                 </div>
                 <p className="text-lg text-muted-foreground">
-                  Alerte si prix de vente &lt; prix de réf. - seuil (&lt; prix réf.)
+                  Alerte si (prix de réf. - prix de vente) / prix de réf. × 100 &gt; seuil (%)
                 </p>
               </div>
             </div>

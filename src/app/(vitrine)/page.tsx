@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Reveal from "@/components/Reveal";
 import {
   ArrowRight, BarChart3, BellRing, HandCoins, FileText, FileSpreadsheet,
@@ -95,7 +96,7 @@ export default function VitrinePage() {
 
         <div className="w-full max-w-5xl pt-8">
           <div className="rounded-2xl border bg-card p-2 shadow-2xl">
-            <img src="/dashbordScren.png" alt="Capture du tableau de bord MagasinPilot" className="w-full rounded-xl object-cover" />
+            <Image src="/dashbordScren.png" alt="Capture du tableau de bord MagasinPilot" width={1280} height={800} className="w-full h-auto rounded-xl object-cover" />
           </div>
         </div>
       </section>

@@ -90,6 +90,14 @@ export default function NouvelAchatPage() {
     e.preventDefault();
     setError("");
     setFieldErrors({});
+    const frontErrors: Record<string, string> = {};
+    if (!fournisseurId) frontErrors.fournisseurId = "Le fournisseur est obligatoire";
+    if (!modePaiement) frontErrors.modePaiement = "Le mode de paiement est obligatoire";
+    if (Object.keys(frontErrors).length > 0) {
+      setFieldErrors(frontErrors);
+      setError("Veuillez sélectionner un fournisseur et un mode de paiement.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -98,8 +106,8 @@ export default function NouvelAchatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: new Date(date).toISOString(),
-          fournisseurId: fournisseurId || undefined,
-          modePaiement: modePaiement || undefined,
+          fournisseurId,
+          modePaiement,
           observation: observation || undefined,
           lineItems: lineItems.map(li => ({
             produitId: li.produitId,
@@ -112,11 +120,11 @@ export default function NouvelAchatPage() {
       if (res.ok) {
         setCreatedDocNum(data.numeroDocument || `ACHAT-${Date.now()}`);
       } else {
-        setError(data.error || "Erreur");
+        setError(data.error || "Une erreur est survenue");
         if (data.errors) setFieldErrors(data.errors);
       }
     } catch {
-      setError("Erreur de connexion");
+      setError("Erreur de connexion. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -129,8 +137,8 @@ export default function NouvelAchatPage() {
           <div className="text-4xl mb-4">✅</div>
           <h2 className="text-xl font-bold mb-2">Achat enregistré !</h2>
           <p className="text-muted-foreground mb-6">
-            Document: <strong>{createdDocNum}</strong><br />
-            Montant total: <strong>{totalAmount.toFixed(2)} DH</strong>
+            Document : <strong>{createdDocNum}</strong><br />
+            Montant total : <strong>{totalAmount.toFixed(2)} DH</strong>
           </p>
           <div className="flex flex-col gap-3">
             <button
@@ -138,13 +146,13 @@ export default function NouvelAchatPage() {
               onClick={() => window.open(`/dashboard/achats/facture?doc=${createdDocNum}&download=true`, "_blank")}
             >
               <Printer className="h-4 w-4" />
-              Télécharger la facture PDF
+              Télécharger la facture en PDF
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background hover:bg-muted px-3 h-9 text-sm font-medium"
               onClick={() => router.push("/dashboard/achats")}
             >
-              Retour aux achats
+              Retour à la liste des achats
             </button>
             <button
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background hover:bg-muted px-3 h-9 text-sm font-medium"
@@ -186,26 +194,28 @@ export default function NouvelAchatPage() {
                 <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
               </div>
               <div className="space-y-2">
-                <label htmlFor="fournisseurId" className="flex items-center gap-2 text-base leading-none font-medium select-none">Fournisseur</label>
-                <select id="fournisseurId" value={fournisseurId} onChange={(e) => setFournisseurId(e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
+                <label htmlFor="fournisseurId" className="flex items-center gap-2 text-base leading-none font-medium select-none">Fournisseur <span className="text-destructive">*</span></label>
+                <select id="fournisseurId" value={fournisseurId} onChange={(e) => { setFournisseurId(e.target.value); setFieldErrors(prev => { const n = { ...prev }; delete n.fournisseurId; return n; }); }} required className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.fournisseurId ? "border-red-500" : "border-input"}`}>
                   <option value="">Sélectionner un fournisseur</option>
                   {fournisseurs.map(s => (
                     <option key={s.id} value={s.id}>{s.nom}</option>
                   ))}
                 </select>
+                {fieldErrors.fournisseurId && <p className="text-sm text-red-600">{fieldErrors.fournisseurId}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-                <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement</label>
-                <select id="modePaiement" value={modePaiement} onChange={(e) => setModePaiement(e.target.value)} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base shadow-sm">
-                  <option value="">Sélectionner</option>
+                <label htmlFor="modePaiement" className="flex items-center gap-2 text-base leading-none font-medium select-none">Mode de paiement <span className="text-destructive">*</span></label>
+                <select id="modePaiement" value={modePaiement} onChange={(e) => { setModePaiement(e.target.value); setFieldErrors(prev => { const n = { ...prev }; delete n.modePaiement; return n; }); }} required className={`flex h-9 w-full rounded-lg border bg-transparent px-3 py-1.5 text-base shadow-sm ${fieldErrors.modePaiement ? "border-red-500" : "border-input"}`}>
+                  <option value="">Sélectionner un mode de paiement</option>
                   <option value="Espèces">Espèces</option>
                   <option value="Chèque">Chèque</option>
                   <option value="Virement">Virement</option>
                   <option value="Carte">Carte</option>
                   <option value="Crédit">Crédit</option>
                 </select>
+                {fieldErrors.modePaiement && <p className="text-sm text-red-600">{fieldErrors.modePaiement}</p>}
             </div>
 
             <div className="space-y-2">
@@ -215,8 +225,8 @@ export default function NouvelAchatPage() {
                   <thead className="[&_tr]:border-b">
                     <tr className="border-b border-border/60 bg-muted/30">
                       <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-2/5">Produit</th>
-                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-16">Qté</th>
-                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-24">Prix unit.</th>
+                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-16">Quantité</th>
+                      <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-24">Prix unitaire</th>
                       <th className="h-10 px-2 text-left font-semibold text-xs uppercase w-24">Total</th>
                       <th className="h-10 px-2 w-10"></th>
                     </tr>
@@ -230,7 +240,7 @@ export default function NouvelAchatPage() {
                               onChange={(e) => updateLine(li.key, "produitId", e.target.value)}
                               className={`flex h-8 w-full rounded border bg-transparent px-2 text-sm ${fieldErrors[`lineItems.${idx}.produitId`] ? "border-red-500" : "border-input"}`}
                             >
-                              <option value="">Choisir...</option>
+                              <option value="">Choisir un produit…</option>
                               {produits.filter(p =>
                                 p.id === li.produitId || !lineItems.some(other => other.key !== li.key && other.produitId === p.id)
                               ).map(p => (
@@ -265,12 +275,12 @@ export default function NouvelAchatPage() {
             </div>
 
             <div className="flex justify-end">
-              <div className="text-base font-bold">Total: {totalAmount.toFixed(2)} DH</div>
+              <div className="text-base font-bold">Total : {totalAmount.toFixed(2)} DH</div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="observation" className="flex items-center gap-2 text-base leading-none font-medium select-none">Observation</label>
-              <input id="observation" placeholder="Optionnel" value={observation} onChange={(e) => setObservation(e.target.value)} className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
+              <input id="observation" placeholder="Optionnelle" value={observation} onChange={(e) => setObservation(e.target.value)} className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3" />
             </div>
 
             <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
@@ -278,7 +288,7 @@ export default function NouvelAchatPage() {
                 Annuler
               </button>
               <button type="submit" disabled={loading} className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground hover:bg-primary/80 px-3 h-9 text-sm font-medium w-full sm:w-auto">
-                {loading ? "Enregistrement..." : "Enregistrer l'achat"}
+                {loading ? "Enregistrement en cours…" : "Enregistrer l'achat"}
               </button>
             </div>
           </form>

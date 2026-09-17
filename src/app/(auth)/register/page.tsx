@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -49,7 +50,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-primary/10 via-background to-background px-4 py-12">
       <div className="flex w-full max-w-sm flex-col rounded-2xl bg-card text-card-foreground shadow-sm ring-1 ring-border">
         <div className="flex flex-col items-center gap-2 px-6 pt-8 text-center">
-          <img src="/erp.png" alt="MagasinPilot" className="h-14 w-14 rounded-2xl object-cover shadow-md" />
+          <Image src="/erp.png" alt="MagasinPilot" width={56} height={56} className="h-14 w-14 rounded-2xl object-cover shadow-md" />
           <h1 className="text-2xl font-extrabold tracking-tight">MagasinPilot</h1>
           <p className="text-sm text-muted-foreground">Créez votre compte responsable</p>
         </div>

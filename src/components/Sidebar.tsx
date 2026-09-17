@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -54,7 +55,7 @@ export default function Sidebar() {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-4 border-b px-6 py-6">
-        <img src="/erp.png" alt="MagasinPilot" className="h-12 w-12 rounded-xl object-cover shadow-md" />
+        <Image src="/erp.png" alt="MagasinPilot" width={48} height={48} className="h-12 w-12 rounded-xl object-cover shadow-md" />
         <span className="text-2xl font-extrabold tracking-tight text-foreground">MagasinPilot</span>
       </div>
 

@@ -25,7 +25,7 @@ export default function VitrineLayout({ children }: { children: React.ReactNode 
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <img src="/erp.png" alt="MagasinPilot" className="h-10 w-10 rounded-xl object-cover shadow-sm" />
+            <Image src="/erp.png" alt="MagasinPilot" width={40} height={40} className="h-10 w-10 rounded-xl object-cover shadow-sm" />
             <span className="text-xl font-bold tracking-tight">MagasinPilot</span>
           </div>
           <nav className="flex items-center gap-4">
@@ -62,7 +62,7 @@ export default function VitrineLayout({ children }: { children: React.ReactNode 
                 aria-label={s.label}
                 className="flex h-11 w-11 items-center justify-center rounded-full border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:bg-muted"
               >
-                <img src={s.src} alt={s.label} className="h-5 w-5" />
+                <Image src={s.src} alt={s.label} width={20} height={20} className="h-5 w-5" />
               </a>
             ))}
           </div>

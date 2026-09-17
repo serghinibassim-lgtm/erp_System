@@ -70,8 +70,6 @@ export default function ProduitsPage() {
                 console.error(err);
             }
 
-            console.log(produits)
-
             const params = new URLSearchParams();
             if (recherche) params.set("search", recherche);
             if (filtrParCtegories) params.set("categoier", filtrParCtegories);

@@ -32,17 +32,17 @@ model Achat {
   id              String    @id @default(cuid())
   date            DateTime
   numeroDocument  String?   @map("numero_document")
-  fournisseurId   String?   @map("fournisseur_id")
+  fournisseurId   String    @map("fournisseur_id")
   produitId       String    @map("produit_id")
   quantite        Int
   prixUnitaire    Decimal   @map("prix_unitaire")
   montantTotal    Decimal   @map("montant_total")
-  modePaiement    String?   @map("mode_paiement")
+  modePaiement    String    @map("mode_paiement")
   observation     String?
   ecart           Decimal?
   alerte          Boolean?
 
-  fournisseur Fournisseur? @relation(fields: [fournisseurId], references: [id])
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id])
   produit     Produit      @relation(fields: [produitId], references: [id])
 
   @@map("achats")
@@ -52,12 +52,12 @@ model Vente {
   id                  String    @id @default(cuid())
   date                DateTime
   numeroVente         String?   @map("numero_vente")
-  clientId            String?   @map("client_id")
+  clientId            String    @map("client_id")
   produitId           String    @map("produit_id")
   quantite            Int
   prixUnitaire        Decimal   @map("prix_unitaire")
   montantTotal        Decimal   @map("montant_total")
-  modePaiement        String?   @map("mode_paiement")
+  modePaiement        String    @map("mode_paiement")
   dateLimitePaiement  DateTime? @map("date_limite_paiement")
   paye                Boolean   @default(false)
   datePaiement        DateTime? @map("date_paiement")
@@ -65,8 +65,8 @@ model Vente {
   ecart               Decimal?
   alerte              Boolean?
 
-  client  Client?  @relation(fields: [clientId], references: [id])
-  produit Produit  @relation(fields: [produitId], references: [id])
+  client  Client  @relation(fields: [clientId], references: [id])
+  produit Produit @relation(fields: [produitId], references: [id])
 
   @@map("ventes")
 }

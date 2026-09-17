@@ -1,3 +1,4 @@
+import "dotenv/config";
 import prisma from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -26,10 +27,36 @@ async function main() {
 
   // 3. Paramètres
   console.log('⚙️ Création des paramètres...');
-  await prisma.parametre.create({ data: { cle: "purchase_alert_threshold", valeur: "5" } });
-  await prisma.parametre.create({ data: { cle: "sale_alert_threshold", valeur: "5" } });
+  await prisma.parametre.create({ data: { cle: "seuil_alerte_achat", valeur: "5" } });
+  await prisma.parametre.create({ data: { cle: "seuil_alerte_vente", valeur: "5" } });
   await prisma.parametre.create({ data: { cle: "categories", valeur: "Informatique\nAccessoires\nPapeterie\nMobilier" } });
   await prisma.parametre.create({ data: { cle: "unites", valeur: "Pièce\nLot\nKg\nMètre" } });
+
+  // 3b. Règle d'alerte prix (identique à l'application) :
+  //     alerte déclenchée si le % d'écart vs prix de référence dépasse le % défini en paramètre.
+  const seuilAchatParam = await prisma.parametre.findUnique({ where: { cle: "seuil_alerte_achat" } });
+  const seuilVenteParam = await prisma.parametre.findUnique({ where: { cle: "seuil_alerte_vente" } });
+  const seuilAchat = seuilAchatParam ? parseFloat(seuilAchatParam.valeur) : 0;
+  const seuilVente = seuilVenteParam ? parseFloat(seuilVenteParam.valeur) : 0;
+  console.log(`📏 Seuils d'alerte prix : achat=${seuilAchat}% vente=${seuilVente}%`);
+
+  function calculAlerteAchat(prixUnitaire: number, prixRef: number) {
+    const ecart = prixUnitaire > prixRef ? prixUnitaire - prixRef : null;
+    let alerte = false;
+    if (ecart != null) {
+      alerte = prixRef > 0 ? (ecart / prixRef) * 100 > seuilAchat : ecart > seuilAchat;
+    }
+    return { ecart, alerte };
+  }
+
+  function calculAlerteVente(prixUnitaire: number, prixRef: number) {
+    const ecart = prixUnitaire < prixRef ? prixRef - prixUnitaire : null;
+    let alerte = false;
+    if (ecart != null) {
+      alerte = prixRef > 0 ? (ecart / prixRef) * 100 > seuilVente : ecart > seuilVente;
+    }
+    return { ecart, alerte };
+  }
 
   // 4. Fournisseurs (5)
   console.log('🏢 Création des fournisseurs...');
@@ -38,9 +65,7 @@ async function main() {
   const f3 = await prisma.fournisseur.create({ data: { code: 'F003', nom: 'Mobilier Plus', telephone: '0600000003', adresse: 'Marrakech', ice: 'ICE345678' } });
   const f4 = await prisma.fournisseur.create({ data: { code: 'F004', nom: 'Papeterie Moderne', telephone: '0600000004', adresse: 'Fès', ice: 'ICE456789' } });
   const f5 = await prisma.fournisseur.create({ data: { code: 'F005', nom: 'Équipements Direct', telephone: '0600000005', adresse: 'Tanger', ice: 'ICE567890' } });
-for(let i=6;i<30;i++){
-  const f = await prisma.fournisseur.create({ data: { code: 'F00'+i, nom: 'Tech Grossiste_'+i, telephone: i<10?'060000000'+i:'06000000'+i, adresse: 'Casablanca+'+i, ice: 'ICE12345'+i } });
-}
+
 
 
   // 5. Clients (6)
@@ -62,81 +87,78 @@ for(let i=6;i<30;i++){
   const p6 = await prisma.produit.create({ data: { code: 'P-CHAISE-01', designation: 'Chaise de Bureau', categorie: 'Mobilier', unite: 'Pièce', prixAchatRef: 800, prixVenteRef: 1500, stockInitial: 20, stockMin: 10 } });
   const p7 = await prisma.produit.create({ data: { code: 'P-CLE-USB-01', designation: 'Clé USB 32Go', categorie: 'Accessoires', unite: 'Pièce', prixAchatRef: 50, prixVenteRef: 100, stockInitial: 500, stockMin: 100 } });
   const p8 = await prisma.produit.create({ data: { code: 'P-IMPR-01', designation: 'Imprimante Laser', categorie: 'Informatique', unite: 'Pièce', prixAchatRef: 3000, prixVenteRef: 4500, stockInitial: 4, stockMin: 3 } });
-for (let i=9;i<50;i++){
-  const p = await prisma.produit.create({ data: { code: 'P-CLE-USB-0'+i, designation: 'Clé USB 32Go_'+i, categorie: 'Accessoires_'+i, unite: 'Pièce', prixAchatRef: 50+i, prixVenteRef: 100+i, stockInitial: 10*i, stockMin: i } });
 
-}
   // ────────────────────────────────────────────────────────────
   // 7. Achats (7)
   // ────────────────────────────────────────────────────────────
   console.log('🛒 Création des achats...');
 
-  // Achat 1 — Souris (Normal, prix conforme)
+  // Achat 1 — Souris (prix conforme au ref → pas d'alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-01-10'), numeroDocument: 'ACH-2026-00001', fournisseurId: f2.id, produitId: p2.id,
       quantite: 200, prixUnitaire: 150, montantTotal: 200 * 150, modePaiement: 'Virement',
-      alerte: false, ecart: 0,
+      ...calculAlerteAchat(150, Number(p2.prixAchatRef)),
       observation: 'Achat normal — prix conforme au prix de référence',
     },
   });
 
-  // Achat 2 — Ordinateur (Alerte prix achat > prix-ref: 6000 > 5000, écart +1000)
+  // Achat 2 — Ordinateur (6000 > ref 5000 → écart 20% > seuil → alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-01-20'), numeroDocument: 'ACH-2026-00002', fournisseurId: f1.id, produitId: p1.id,
       quantite: 15, prixUnitaire: 6000, montantTotal: 15 * 6000, modePaiement: 'Chèque',
-      alerte: true, ecart: 1000,
+      ...calculAlerteAchat(6000, Number(p1.prixAchatRef)),
       observation: 'Alerte prix achat > prix-ref — écart: +1000.00 DH',
     },
   });
 
-  // Achat 3 — Bureau (Alerte prix achat > prix-ref: 2000 > 1500, écart +500)
+  // Achat 3 — Bureau (2000 > ref 1500 → écart 33% > seuil → alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-02-05'), numeroDocument: 'ACH-2026-00003', fournisseurId: f3.id, produitId: p4.id,
       quantite: 12, prixUnitaire: 2000, montantTotal: 12 * 2000, modePaiement: 'Virement',
-      alerte: true, ecart: 500,
+      ...calculAlerteAchat(2000, Number(p4.prixAchatRef)),
       observation: 'Alerte prix achat > prix-ref — écart: +500.00 DH',
     },
   });
 
-  // Achat 4 — Papier A4 (Normal)
+  // Achat 4 — Papier A4 (prix conforme au ref → pas d'alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-02-15'), numeroDocument: 'ACH-2026-00004', fournisseurId: f4.id, produitId: p5.id,
       quantite: 150, prixUnitaire: 80, montantTotal: 150 * 80, modePaiement: 'Espèces',
-      alerte: false, ecart: 0,
+      ...calculAlerteAchat(80, Number(p5.prixAchatRef)),
       observation: 'Achat normal — prix conforme',
     },
   });
 
-  // Achat 5 — Clé USB (Normal)
+  // Achat 5 — Clé USB (prix conforme au ref → pas d'alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-02-20'), numeroDocument: 'ACH-2026-00005', fournisseurId: f2.id, produitId: p7.id,
       quantite: 300, prixUnitaire: 50, montantTotal: 300 * 50, modePaiement: 'Virement',
-      alerte: false, ecart: 0,
+      ...calculAlerteAchat(50, Number(p7.prixAchatRef)),
       observation: 'Achat normal — stock de recharge',
     },
   });
 
-  // Achat 6 — Imprimante (Alerte prix achat > prix-ref: 3500 > 3000, écart +500)
+  // Achat 6 — Imprimante (3500 > ref 3000 → écart 16.7% > seuil → alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-03-01'), numeroDocument: 'ACH-2026-00006', fournisseurId: f1.id, produitId: p8.id,
       quantite: 6, prixUnitaire: 3500, montantTotal: 6 * 3500, modePaiement: 'Chèque',
-      alerte: true, ecart: 500,
+      ...calculAlerteAchat(3500, Number(p8.prixAchatRef)),
       observation: 'Alerte prix achat > prix-ref — écart: +500.00 DH',
     },
   });
 
-  // Achat 7 — Tableau Blanc (Normal)
+  // Achat 7 — Tableau Blanc (prix conforme au ref → pas d'alerte)
   await prisma.achat.create({
     data: {
       date: new Date('2026-03-10'), numeroDocument: 'ACH-2026-00007', fournisseurId: f4.id, produitId: p3.id,
       quantite: 10, prixUnitaire: 200, montantTotal: 10 * 200, modePaiement: 'Espèces',
-      alerte: false, ecart: 0,
+      ...calculAlerteAchat(200, Number(p3.prixAchatRef)),
       observation: 'Achat normal — réapprovisionnement',
     },
   });
@@ -148,116 +170,116 @@ for (let i=9;i<50;i++){
 
   // ── Ventes normales (paiement comptant) ──
 
-  // Vente 1 — Ordinateurs à Entreprise Alpha (Virement, conforme)
+  // Vente 1 — Ordinateurs à Entreprise Alpha (prix conforme au ref → pas d'alerte)
   await prisma.vente.create({
     data: {
       date: new Date('2026-01-25'), numeroVente: 'FAC-2026-00001', clientId: c1.id, produitId: p1.id,
       quantite: 3, prixUnitaire: 7500, montantTotal: 3 * 7500, modePaiement: 'Virement',
       paye: true, datePaiement: new Date('2026-01-28'),
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(7500, Number(p1.prixVenteRef)),
       observation: 'Vente normale — paiement virement reçu',
     },
   });
 
-  // Vente 2 — Souris à Client Particulier (Espèces, ALERTE prix < ref: 120 < 300)
+  // Vente 2 — Souris à Client Particulier (120 < ref 300 → écart 60% > seuil → alerte)
   await prisma.vente.create({
     data: {
       date: new Date('2026-02-10'), numeroVente: 'FAC-2026-00002', clientId: c2.id, produitId: p2.id,
       quantite: 20, prixUnitaire: 120, montantTotal: 20 * 120, modePaiement: 'Espèces',
       paye: true, datePaiement: new Date('2026-02-10'),
-      alerte: true, ecart: -180,
+      ...calculAlerteVente(120, Number(p2.prixVenteRef)),
       observation: 'Alerte prix vente < prix-ref — écart: -180.00 DH',
     },
   });
 
-  // Vente 3 — Papier A4 à École Moderne (Espèces, conforme)
+  // Vente 3 — Papier A4 à École Moderne (prix conforme au ref → pas d'alerte)
   await prisma.vente.create({
     data: {
       date: new Date('2026-03-05'), numeroVente: 'FAC-2026-00003', clientId: c4.id, produitId: p5.id,
       quantite: 30, prixUnitaire: 150, montantTotal: 30 * 150, modePaiement: 'Espèces',
       paye: true, datePaiement: new Date('2026-03-05'),
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(150, Number(p5.prixVenteRef)),
       observation: 'Vente normale — commande école',
     },
   });
 
-  // Vente 4 — Clé USB à Bureau Express (Espèces, ALERTE prix < ref: 70 < 100)
+  // Vente 4 — Clé USB à Bureau Express (70 < ref 100 → écart 30% > seuil → alerte)
   await prisma.vente.create({
     data: {
       date: new Date('2026-03-12'), numeroVente: 'FAC-2026-00004', clientId: c5.id, produitId: p7.id,
       quantite: 50, prixUnitaire: 70, montantTotal: 50 * 70, modePaiement: 'Espèces',
       paye: true, datePaiement: new Date('2026-03-12'),
-      alerte: true, ecart: -30,
+      ...calculAlerteVente(70, Number(p7.prixVenteRef)),
       observation: 'Alerte prix vente < prix-ref — écart: -30.00 DH',
     },
   });
 
   // ── Ventes Crédit — NON payées (en attente) ──
 
-  // Vente 5 — Bureau à SARL Bâtiment (Crédit, NON payée, date limite dépassée → EN RETARD)
+  // Vente 5 — Bureau à SARL Bâtiment (Crédit NON payée, échéance dépassée → EN RETARD ; prix conforme → pas d'alerte prix)
   await prisma.vente.create({
     data: {
       date: new Date('2026-02-01'), numeroVente: 'FAC-2026-00005', clientId: c3.id, produitId: p4.id,
       quantite: 4, prixUnitaire: 3000, montantTotal: 4 * 3000, modePaiement: 'Crédit',
       dateLimitePaiement: new Date('2026-03-01'), paye: false,
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(3000, Number(p4.prixVenteRef)),
       observation: 'Vente crédit — échéance dépassée, client en retard de paiement',
     },
   });
 
-  // Vente 6 — Imprimante à École Moderne (Crédit, NON payée, date limite dépassée → EN RETARD)
+  // Vente 6 — Imprimante à École Moderne (Crédit NON payée, échéance dépassée → EN RETARD ; prix conforme → pas d'alerte prix)
   await prisma.vente.create({
     data: {
       date: new Date('2026-02-15'), numeroVente: 'FAC-2026-00006', clientId: c4.id, produitId: p8.id,
       quantite: 2, prixUnitaire: 4500, montantTotal: 2 * 4500, modePaiement: 'Crédit',
       dateLimitePaiement: new Date('2026-03-15'), paye: false,
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(4500, Number(p8.prixVenteRef)),
       observation: 'Vente crédit — échéance dépassée, relance nécessaire',
     },
   });
 
-  // Vente 7 — Ordinateurs à Librairie Centrale (Crédit, NON payée, en attente)
+  // Vente 7 — Ordinateurs à Librairie Centrale (Crédit NON payée, en attente ; prix conforme → pas d'alerte prix)
   await prisma.vente.create({
     data: {
       date: new Date('2026-03-20'), numeroVente: 'FAC-2026-00007', clientId: c6.id, produitId: p1.id,
       quantite: 2, prixUnitaire: 7500, montantTotal: 2 * 7500, modePaiement: 'Crédit',
       dateLimitePaiement: new Date('2026-04-20'), paye: false,
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(7500, Number(p1.prixVenteRef)),
       observation: 'Vente crédit — en attente de paiement',
     },
   });
 
-  // Vente 8 — Chaises à Entreprise Alpha (Crédit, NON payée, en attente)
+  // Vente 8 — Chaises à Entreprise Alpha (Crédit NON payée, en attente ; prix conforme → pas d'alerte prix)
   await prisma.vente.create({
     data: {
       date: new Date('2026-04-01'), numeroVente: 'FAC-2026-00008', clientId: c1.id, produitId: p6.id,
       quantite: 10, prixUnitaire: 1500, montantTotal: 10 * 1500, modePaiement: 'Crédit',
       dateLimitePaiement: new Date('2026-05-01'), paye: false,
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(1500, Number(p6.prixVenteRef)),
       observation: 'Vente crédit — commande mobilier bureau',
     },
   });
 
   // ── Ventes Crédit — PAYÉES (recouvrement effectué) ──
 
-  // Vente 9 — Tableaux à Bureau Express (Crédit, PAYÉE)
+  // Vente 9 — Tableaux à Bureau Express (Crédit PAYÉE ; prix conforme → pas d'alerte prix)
   await prisma.vente.create({
     data: {
       date: new Date('2026-01-05'), numeroVente: 'FAC-2026-00009', clientId: c5.id, produitId: p3.id,
       quantite: 15, prixUnitaire: 400, montantTotal: 15 * 400, modePaiement: 'Crédit',
       dateLimitePaiement: new Date('2026-02-05'), paye: true, datePaiement: new Date('2026-01-30'),
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(400, Number(p3.prixVenteRef)),
       observation: 'Vente crédit — payée avant échéance',
     },
   });
 
-  // Vente 10 — Clés USB à SARL Bâtiment (Crédit, PAYÉE)
+  // Vente 10 — Clés USB à SARL Bâtiment (Crédit PAYÉE ; prix conforme → pas d'alerte prix)
   await prisma.vente.create({
     data: {
       date: new Date('2026-02-01'), numeroVente: 'FAC-2026-00010', clientId: c3.id, produitId: p7.id,
       quantite: 100, prixUnitaire: 100, montantTotal: 100 * 100, modePaiement: 'Crédit',
       dateLimitePaiement: new Date('2026-03-01'), paye: true, datePaiement: new Date('2026-02-25'),
-      alerte: false, ecart: 0,
+      ...calculAlerteVente(100, Number(p7.prixVenteRef)),
       observation: 'Vente crédit — paiement reçu',
     },
   });
@@ -352,11 +374,11 @@ for (let i=9;i<50;i++){
   console.log('');
   console.log('   ── Achats (7) ──');
   console.log('   • 4 achats normaux (prix conforme)');
-  console.log('   • 3 achats avec ALERTE prix (prix achat > prix référence)');
+  console.log('   • 3 achats avec ALERTE prix (% écart > seuil paramètre)');
   console.log('');
   console.log('   ── Ventes (10) ──');
   console.log('   • 4 ventes comptant normales');
-  console.log('   • 2 ventes comptant avec ALERTE prix (prix vente < prix référence)');
+  console.log('   • 2 ventes comptant avec ALERTE prix (% écart > seuil paramètre)');
   console.log('   • 4 ventes CRÉDIT dont:');
   console.log('     - 2 en retard (échéance dépassée, non payées)');
   console.log('     - 2 en attente (échéance non dépassée, non payées)');
