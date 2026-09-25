@@ -37,6 +37,8 @@ export default function UtilisateursPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Utilisateur | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -90,11 +92,13 @@ export default function UtilisateursPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cet utilisateur ?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/utilisateurs/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/utilisateurs/${deleteTarget.id}`, { method: "DELETE" });
       if (res.ok) {
+        setDeleteTarget(null);
         if (utilisateurs.length === 1 && page > 1) {
           setPage((p) => p - 1);
         } else {
@@ -103,6 +107,8 @@ export default function UtilisateursPage() {
       }
     } catch {
       console.error("Failed to delete user");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -243,7 +249,7 @@ export default function UtilisateursPage() {
                     <td className="p-3 align-middle text-right">
                       {u.role !== "RESPONSABLE" && (
                         <button
-                          onClick={() => handleDelete(u.id)}
+                          onClick={() => setDeleteTarget(u)}
                           className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-background text-red-600 hover:bg-red-50 px-2.5 h-7 text-xs font-medium transition-all"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -266,6 +272,37 @@ export default function UtilisateursPage() {
           />
         )}
       </div>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/10" onClick={() => setDeleteTarget(null)} />
+          <div className="relative z-50 w-full max-w-[calc(100%-2rem)] rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 sm:max-w-sm">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-base font-medium leading-none">Confirmer la suppression</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Êtes-vous sûr de vouloir supprimer l&apos;employé <strong>{deleteTarget?.nom}</strong> ({deleteTarget?.email}) ? Cette action est irréversible.
+            </p>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-4">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                className="inline-flex items-center justify-center rounded-lg border border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20 px-3 h-9 text-sm font-medium whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+                onClick={confirmDelete}
+              >
+                {deleting ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

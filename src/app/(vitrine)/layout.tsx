@@ -3,18 +3,23 @@ import Image from "next/image";
 
 const socials = [
   {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/",
-    src: "/linkedin.svg",
+    label: "Instagram — CAD Digital Agency",
+    href: "https://www.instagram.com/caddigitalagency/",
+    src: "/instagram.svg",
   },
   {
-    label: "GitHub",
-    href: "https://github.com/",
+    label: "GitHub — CAD Digital Agency",
+    href: "https://github.com/cad-code",
     src: "/github-light.svg",
   },
   {
-    label: "Gmail",
-    href: "mailto:contact@magasinpilot.com",
+    label: "LinkedIn — CAD Digital Agency",
+    href: "https://www.linkedin.com/company/cad-digital-agency/posts/?feedView=all",
+    src: "/linkedin.svg",
+  },
+  {
+    label: "Email — caddigitalagency@gmail.com",
+    href: "mailto:caddigitalagency@gmail.com",
     src: "/gmail-2026.svg",
   },
 ];
@@ -53,18 +58,29 @@ export default function VitrineLayout({ children }: { children: React.ReactNode 
 
 
           <div className="flex items-center justify-center gap-4">
-            {socials.map(s => (
+            {socials.map((s) => (
               <a
                 key={s.label}
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={s.label}
+                title={s.label}
                 className="flex h-11 w-11 items-center justify-center rounded-full border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:bg-muted"
               >
                 <Image src={s.src} alt={s.label} width={20} height={20} className="h-5 w-5" />
               </a>
             ))}
+          </div>
+
+          <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+            <a
+              href="mailto:caddigitalagency@gmail.com"
+              className="font-medium text-foreground hover:underline"
+            >
+              caddigitalagency@gmail.com
+            </a>
+            <p>© {new Date().getFullYear()} CAD Digital Agency — Tous droits réservés.</p>
           </div>
 
 
